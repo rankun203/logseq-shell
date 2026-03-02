@@ -9,6 +9,7 @@ An integrated terminal panel for Logseq.
   - `Logseq Shell: Toggle panel`
   - `Logseq Shell: Open panel`
 - Opens a shell panel docked to **bottom** or **right**
+- Includes a **restart session** button (fresh terminal session)
 - Supports startup default command
 - Follows Logseq theme colors (light/dark/custom)
 

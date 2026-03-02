@@ -193,6 +193,11 @@ function renderRoot() {
   app.innerHTML = `
     <div class="shell-root" data-dock-side="bottom">
       <div id="resize-handle" class="resize-handle" aria-hidden="true"></div>
+      <div class="shell-session-controls">
+        <button id="restart-session-btn" class="session-action-btn" title="Restart terminal session" aria-label="Restart terminal session">
+          <i class="ti ti-refresh"></i>
+        </button>
+      </div>
       <div class="terminal-wrap" id="terminal"></div>
     </div>
   `
@@ -223,6 +228,15 @@ function mountTerminal() {
     fontFamily: style.fontFamily || undefined,
     cursorBlink: style.cursorBlink
   })
+
+  const restartBtn = document.getElementById('restart-session-btn') as HTMLButtonElement | null
+  if (restartBtn) restartBtn.onclick = () => restartTerminalSession()
+}
+
+function restartTerminalSession() {
+  ensureMounted()
+  mountTerminal()
+  fitAfterOpen()
 }
 
 function ensureMounted() {
@@ -505,7 +519,8 @@ function setupLogseq() {
 
   ls.provideModel({
     toggleShellPanel: () => void togglePanel(),
-    openShellPanel: () => void openPanel()
+    openShellPanel: () => void openPanel(),
+    restartShellSession: () => restartTerminalSession()
   })
 
   ls.App.registerUIItem('toolbar', {
@@ -528,6 +543,14 @@ function setupLogseq() {
       label: 'Logseq Shell: Open panel'
     },
     () => void openPanel()
+  )
+
+  ls.App.registerCommandPalette(
+    {
+      key: 'logseq-shell-restart-session',
+      label: 'Logseq Shell: Restart terminal session'
+    },
+    () => restartTerminalSession()
   )
 
   const s = getSettings()
