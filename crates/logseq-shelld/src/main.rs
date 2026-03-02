@@ -168,10 +168,10 @@ fn service_runtime_args(args: &Args) -> Vec<String> {
         cmd.push(token.clone());
     }
 
-    if let Some(shell) = &args.shell {
-        cmd.push("--shell".to_string());
-        cmd.push(shell.clone());
-    }
+    // Bake the shell into service args so service restarts keep using the
+    // same shell even when SHELL isn't present in the service environment.
+    cmd.push("--shell".to_string());
+    cmd.push(pick_shell(args));
 
     cmd
 }
@@ -247,8 +247,8 @@ fn install_launchd_service(args: &Args) -> anyhow::Result<()> {
     let logs_dir = home.join("Library/Logs");
     fs::create_dir_all(&logs_dir).with_context(|| format!("create {}", logs_dir.display()))?;
 
-    let label = format!("ai.logseq.{}", args.service_name.replace('_', "-"));
-    let plist_path = launch_agents_dir.join(format!("{label}.plist"));
+    let label = launchd_label(args);
+    let plist_path = launchd_plist_path(args)?;
 
     let exe = std::env::current_exe().context("resolve current executable path")?;
     let mut program_args = vec![exe.to_string_lossy().to_string()];
@@ -262,6 +262,17 @@ fn install_launchd_service(args: &Args) -> anyhow::Result<()> {
             "
 ",
         );
+
+    let home_env = home.to_string_lossy().to_string();
+    let user_env = std::env::var("USER").unwrap_or_default();
+    let shell_env = pick_shell(args);
+    let path_env = std::env::var("PATH").unwrap_or_else(|_| {
+        format!(
+            "{}/.cargo/bin:{}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+            home_env, home_env
+        )
+    });
+    let lang_env = std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".to_string());
 
     let stdout_log = logs_dir.join(format!("{}.log", args.service_name));
     let stderr_log = logs_dir.join(format!("{}.error.log", args.service_name));
@@ -277,6 +288,14 @@ fn install_launchd_service(args: &Args) -> anyhow::Result<()> {
   <array>
 {program_args_xml}
   </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key><string>{home_env}</string>
+    <key>USER</key><string>{user_env}</string>
+    <key>SHELL</key><string>{shell_env}</string>
+    <key>PATH</key><string>{path_env}</string>
+    <key>LANG</key><string>{lang_env}</string>
+  </dict>
   <key>RunAtLoad</key>
   <true/>
   <key>KeepAlive</key>
@@ -290,6 +309,11 @@ fn install_launchd_service(args: &Args) -> anyhow::Result<()> {
 "#,
         label = xml_escape(&label),
         program_args_xml = program_args_xml,
+        home_env = xml_escape(&home_env),
+        user_env = xml_escape(&user_env),
+        shell_env = xml_escape(&shell_env),
+        path_env = xml_escape(&path_env),
+        lang_env = xml_escape(&lang_env),
         stdout_log = xml_escape(&stdout_log.to_string_lossy()),
         stderr_log = xml_escape(&stderr_log.to_string_lossy()),
     );
@@ -323,8 +347,8 @@ fn install_systemd_user_service(args: &Args) -> anyhow::Result<()> {
     fs::create_dir_all(&systemd_user_dir)
         .with_context(|| format!("create {}", systemd_user_dir.display()))?;
 
-    let unit_name = format!("{}.service", args.service_name);
-    let unit_path = systemd_user_dir.join(&unit_name);
+    let unit_name = systemd_unit_name(args);
+    let unit_path = systemd_unit_path(args)?;
 
     let exe = std::env::current_exe().context("resolve current executable path")?;
     let mut cmdline = vec![exe.to_string_lossy().to_string()];
@@ -336,6 +360,17 @@ fn install_systemd_user_service(args: &Args) -> anyhow::Result<()> {
         .collect::<Vec<_>>()
         .join(" ");
 
+    let home_env = home.to_string_lossy().to_string();
+    let user_env = std::env::var("USER").unwrap_or_default();
+    let shell_env = pick_shell(args);
+    let path_env = std::env::var("PATH").unwrap_or_else(|_| {
+        format!(
+            "{}/.cargo/bin:{}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+            home_env, home_env
+        )
+    });
+    let lang_env = std::env::var("LANG").unwrap_or_else(|_| "en_US.UTF-8".to_string());
+
     let unit = format!(
         "[Unit]
 Description=logseq-shelld local PTY daemon
@@ -343,6 +378,11 @@ After=default.target
 
 [Service]
 Type=simple
+Environment=\"HOME={}\"
+Environment=\"USER={}\"
+Environment=\"SHELL={}\"
+Environment=\"PATH={}\"
+Environment=\"LANG={}\"
 ExecStart={}
 Restart=always
 RestartSec=2
@@ -350,6 +390,11 @@ RestartSec=2
 [Install]
 WantedBy=default.target
 ",
+        shell_escape(&home_env),
+        shell_escape(&user_env),
+        shell_escape(&shell_env),
+        shell_escape(&path_env),
+        shell_escape(&lang_env),
         exec_start
     );
 

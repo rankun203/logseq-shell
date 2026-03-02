@@ -15,6 +15,7 @@ cargo install --git https://github.com/rankun203/logseq-shell --tag v1.0.1 logse
 ```
 
 This avoids macOS downloaded-binary quarantine issues and installs from source directly.
+`--install-service` now records your current user shell and key environment values (HOME/USER/PATH/LANG) for service runs.
 
 If `cargo` is missing:
 
