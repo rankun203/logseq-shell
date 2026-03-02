@@ -7,30 +7,68 @@ Logseq terminal integration:
 
 ## User guide
 
-## 1) Install the daemon (`logseq-shelld`)
+## Quick install (single-command)
 
-### Option A: GitHub release binaries (recommended)
+### 1) Install daemon + auto-start service (macOS/Ubuntu)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rankun203/logseq-shell/master/scripts/install-logseq-shelld.sh | bash
+```
+
+This will:
+- download latest `logseq-shelld` binary for your platform
+- place it in `~/.local/bin/logseq-shelld`
+- `chmod +x` it
+- run `logseq-shelld --install-service` (system default service manager)
+
+### 2) Install plugin files
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rankun203/logseq-shell/master/scripts/install-logseq-shell-plugin.sh | bash
+```
+
+This installs plugin files to:
+
+`~/.logseq/plugins/logseq-shell`
+
+Then in Logseq desktop:
+1. Open **Plugins**
+2. Click **Load unpacked plugin**
+3. Select folder: `~/.logseq/plugins/logseq-shell`
+
+Default daemon URL in plugin settings:
+
+`ws://127.0.0.1:34981/ws`
+
+---
+
+## Manual install
+
+### Daemon (`logseq-shelld`)
+
+#### Option A: GitHub release binaries (recommended)
 
 1. Open Releases: <https://github.com/rankun203/logseq-shell/releases>
 2. Download the archive for your platform (`logseq-shelld-<target>.tar.gz`)
 3. Extract and place `logseq-shelld` in your PATH
+4. `chmod +x` if needed
 
-### Option B: Build from source
+#### Option B: Build from source
 
 ```bash
 cargo build --release -p logseq-shelld
 # binary: target/release/logseq-shelld
 ```
 
-## 2) Start daemon
+### Start daemon
 
-### Run once in foreground
+Foreground run:
 
 ```bash
 logseq-shelld --host 127.0.0.1 --port 34981
 ```
 
-### Install as auto-start service (system default)
+Install auto-start service (system default):
 
 ```bash
 logseq-shelld --install-service
@@ -47,17 +85,14 @@ logseq-shelld \
 ```
 
 Platform behavior:
+- **macOS**: launchd (`~/Library/LaunchAgents/`)
+- **Ubuntu/Linux**: systemd user (`~/.config/systemd/user/`)
 
-- **macOS**: installs a LaunchAgent in `~/Library/LaunchAgents/` (launchd)
-- **Ubuntu/Linux**: installs a systemd user unit in `~/.config/systemd/user/`
-
-> Linux tip: if you want user services to keep running even when logged out, run once:
+> Linux tip: keep user services running when logged out:
 >
 > `sudo loginctl enable-linger $USER`
 
-## 3) Install the Logseq plugin
-
-Currently this repo ships as an unpacked plugin.
+### Plugin (`logseq-shell`)
 
 ```bash
 pnpm install
@@ -65,31 +100,29 @@ pnpm --filter logseq-shell build
 ```
 
 Then in Logseq desktop:
-
 1. Open **Plugins**
 2. Click **Load unpacked plugin**
 3. Select folder: `apps/logseq-shell`
 
-Default daemon URL in plugin settings:
+---
 
-`ws://127.0.0.1:34981/ws`
-
-## CI/CD and releases
+## CI/CD and release artifacts
 
 GitHub Actions workflow (`.github/workflows/release-shelld.yml`) automatically:
 
-- builds `logseq-shelld` on `main`/`master` for:
+- builds `logseq-shelld` on:
   - `x86_64-unknown-linux-gnu`
   - `x86_64-apple-darwin`
   - `aarch64-apple-darwin`
-- uploads build artifacts to workflow runs
-- when pushing a tag like `v0.1.0`, publishes binary archives to GitHub Releases
+- builds `logseq-shell` plugin bundle
+- uploads build artifacts on `main`/`master` pushes
+- on tags like `v0.1.0`, publishes both daemon and plugin archives to GitHub Releases
 
 ---
 
 ## Development (moved down)
 
-## Prerequisites
+### Prerequisites
 
 - Node.js 22+
 - pnpm 10+
@@ -102,7 +135,7 @@ curl -fsSL https://sh.rustup.rs | sh -s -- -y
 source "$HOME/.cargo/env"
 ```
 
-## Install dependencies
+### Install dependencies
 
 ```bash
 pnpm install
@@ -110,7 +143,7 @@ source "$HOME/.cargo/env"
 cargo fetch
 ```
 
-## Build
+### Build
 
 ```bash
 # plugin
@@ -121,7 +154,7 @@ source "$HOME/.cargo/env"
 cargo build -p logseq-shelld
 ```
 
-## Test
+### Test
 
 ```bash
 # plugin unit tests + TS checks
@@ -133,7 +166,7 @@ source "$HOME/.cargo/env"
 cargo test -p logseq-shelld
 ```
 
-## Local preview
+### Local preview
 
 ```bash
 pnpm --filter logseq-shell preview --host 127.0.0.1 --port 4173
