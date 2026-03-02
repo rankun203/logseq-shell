@@ -16,34 +16,25 @@ Use direct release binary URLs published by GitHub Actions.
 macOS (Apple Silicon):
 
 ```bash
-TMP="$(mktemp -d)" && \
-curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-aarch64-apple-darwin.tar.gz" -o "$TMP/logseq-shelld.tgz" && \
-tar -xzf "$TMP/logseq-shelld.tgz" -C "$TMP" && \
-mkdir -p "$HOME/.local/bin" && \
-install -m 755 "$TMP/logseq-shelld-aarch64-apple-darwin" "$HOME/.local/bin/logseq-shelld" && \
-"$HOME/.local/bin/logseq-shelld" --install-service
+mkdir -p "$HOME/.local/bin"
+curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-aarch64-apple-darwin.tar.gz" | tar -xzO logseq-shelld-aarch64-apple-darwin > "$HOME/.local/bin/logseq-shelld"
+chmod +x "$HOME/.local/bin/logseq-shelld" && "$HOME/.local/bin/logseq-shelld" --install-service
 ```
 
 Ubuntu (x86_64):
 
 ```bash
-TMP="$(mktemp -d)" && \
-curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-x86_64-unknown-linux-gnu.tar.gz" -o "$TMP/logseq-shelld.tgz" && \
-tar -xzf "$TMP/logseq-shelld.tgz" -C "$TMP" && \
-mkdir -p "$HOME/.local/bin" && \
-install -m 755 "$TMP/logseq-shelld-x86_64-unknown-linux-gnu" "$HOME/.local/bin/logseq-shelld" && \
-"$HOME/.local/bin/logseq-shelld" --install-service
+mkdir -p "$HOME/.local/bin"
+curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-x86_64-unknown-linux-gnu.tar.gz" | tar -xzO logseq-shelld-x86_64-unknown-linux-gnu > "$HOME/.local/bin/logseq-shelld"
+chmod +x "$HOME/.local/bin/logseq-shelld" && "$HOME/.local/bin/logseq-shelld" --install-service
 ```
 
 ### 2) Install plugin files from Release
 
 ```bash
-TMP="$(mktemp -d)" && \
-curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shell-plugin.tar.gz" -o "$TMP/logseq-shell-plugin.tgz" && \
-tar -xzf "$TMP/logseq-shell-plugin.tgz" -C "$TMP" && \
-mkdir -p "$HOME/.logseq/plugins" && \
-rm -rf "$HOME/.logseq/plugins/logseq-shell" && \
-cp -R "$TMP/logseq-shell-plugin" "$HOME/.logseq/plugins/logseq-shell"
+mkdir -p "$HOME/.logseq/plugins" && rm -rf "$HOME/.logseq/plugins/logseq-shell"
+curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shell-plugin.tar.gz" | tar -xz -C "$HOME/.logseq/plugins"
+mv "$HOME/.logseq/plugins/logseq-shell-plugin" "$HOME/.logseq/plugins/logseq-shell"
 ```
 
 Then in Logseq desktop:
