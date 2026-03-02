@@ -140,6 +140,12 @@ function ensureDockAttrs(ls: any) {
   ls.setMainUIAttrs(attrs)
 }
 
+function setDockStyle(ls: any, side: DockSide, size: number, enforceAttrs = false) {
+  if (enforceAttrs) ensureDockAttrs(ls)
+  ls.setMainUIInlineStyle(calcMainUIStyle(side, size))
+  syncRootDockSide(side)
+}
+
 async function applyDockStyle(override?: Partial<Pick<Settings, 'dockSide' | 'panelSize'>>) {
   const ls = getLS()
   if (!ls) return
@@ -148,9 +154,7 @@ async function applyDockStyle(override?: Partial<Pick<Settings, 'dockSide' | 'pa
   const side = override?.dockSide ?? s.dockSide
   const size = clampPanelSize(side, override?.panelSize ?? s.panelSize)
 
-  ensureDockAttrs(ls)
-  ls.setMainUIInlineStyle(calcMainUIStyle(side, size))
-  syncRootDockSide(side)
+  setDockStyle(ls, side, size, true)
 }
 
 function fitAfterOpen() {
@@ -203,16 +207,29 @@ function setupResizeHandle() {
     const side = s.dockSide
     const cursor = side === 'right' ? 'ew-resize' : 'ns-resize'
 
-    const startSize = s.panelSize
-    const startX = ev.clientX
-    const startY = ev.clientY
+    const startSize = clampPanelSize(side, s.panelSize)
+    const startAxis = side === 'right' ? ev.screenX : ev.screenY
     let latestSize = startSize
+    let pendingSize = startSize
+    let rafId: number | null = null
 
     const root = getRootEl()
     root?.classList.add('is-resizing')
 
     const targets = collectDragTargets()
     const prevCursorByDoc = new Map<Document, string>()
+
+    const flush = () => {
+      rafId = null
+      if (ls) {
+        setDockStyle(ls, side, pendingSize, false)
+      }
+    }
+
+    const scheduleFlush = () => {
+      if (rafId != null) return
+      rafId = window.requestAnimationFrame(flush)
+    }
 
     const cleanup = () => {
       targets.forEach(({ win, doc }) => {
@@ -225,13 +242,20 @@ function setupResizeHandle() {
         }
       })
       root?.classList.remove('is-resizing')
+
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId)
+        rafId = null
+      }
+      flush()
     }
 
     const onMove = (e: MouseEvent) => {
-      const delta = side === 'right' ? (startX - e.clientX) : (startY - e.clientY)
+      const axis = side === 'right' ? e.screenX : e.screenY
+      const delta = startAxis - axis
       latestSize = clampPanelSize(side, startSize + delta)
-      void applyDockStyle({ dockSide: side, panelSize: latestSize })
-      controller?.fit()
+      pendingSize = latestSize
+      scheduleFlush()
       e.preventDefault()
     }
 
