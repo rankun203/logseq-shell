@@ -7,26 +7,20 @@ Logseq terminal integration:
 
 ## User guide
 
-## Quick install
-
-### 1) Install daemon + auto-start service (macOS Apple Silicon / Ubuntu)
-
-Use direct release binary URLs published by GitHub Actions.
-
-macOS (Apple Silicon):
+### 1) Install daemon (recommended)
 
 ```bash
-mkdir -p "$HOME/.local/bin"
-curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-aarch64-apple-darwin.tar.gz" | tar -xzO logseq-shelld-aarch64-apple-darwin > "$HOME/.local/bin/logseq-shelld"
-chmod +x "$HOME/.local/bin/logseq-shelld" && "$HOME/.local/bin/logseq-shelld" --install-service
+cargo install --git https://github.com/rankun203/logseq-shell --tag v1.0.1 logseq-shelld
+~/.cargo/bin/logseq-shelld --install-service
 ```
 
-Ubuntu (x86_64):
+This avoids macOS downloaded-binary quarantine issues and installs from source directly.
+
+If `cargo` is missing:
 
 ```bash
-mkdir -p "$HOME/.local/bin"
-curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-x86_64-unknown-linux-gnu.tar.gz" | tar -xzO logseq-shelld-x86_64-unknown-linux-gnu > "$HOME/.local/bin/logseq-shelld"
-chmod +x "$HOME/.local/bin/logseq-shelld" && "$HOME/.local/bin/logseq-shelld" --install-service
+curl -fsSL https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
 ```
 
 ### 2) Install plugin files from Release
@@ -46,60 +40,11 @@ Default daemon URL in plugin settings:
 
 `ws://127.0.0.1:34981/ws`
 
----
-
-## Manual install
-
-### Daemon (`logseq-shelld`)
-
-#### Option A: GitHub release binaries (recommended)
-
-1. Open Releases: <https://github.com/rankun203/logseq-shell/releases>
-2. Download the archive for your platform (`logseq-shelld-<target>.tar.gz`)
-3. Extract and place `logseq-shelld` in your PATH
-4. `chmod +x` if needed
-
-#### Option B: Build from source
+### 3) Service management
 
 ```bash
-cargo build --release -p logseq-shelld
-# binary: target/release/logseq-shelld
-```
-
-### Start daemon
-
-Foreground run:
-
-```bash
-logseq-shelld --host 127.0.0.1 --port 34981
-```
-
-Install auto-start service (system default):
-
-```bash
-logseq-shelld --install-service
-```
-
-Optional customization:
-
-```bash
-logseq-shelld \
-  --host 127.0.0.1 \
-  --port 34981 \
-  --service-name logseq-shelld \
-  --install-service
-```
-
-Check service status:
-
-```bash
-logseq-shelld --service-status
-```
-
-Uninstall service:
-
-```bash
-logseq-shelld --uninstall-service
+~/.cargo/bin/logseq-shelld --service-status
+~/.cargo/bin/logseq-shelld --uninstall-service
 ```
 
 Platform behavior:
@@ -110,27 +55,12 @@ Platform behavior:
 >
 > `sudo loginctl enable-linger $USER`
 
-### Plugin (`logseq-shell`)
-
-#### Option A: GitHub release plugin archive (recommended)
-
-1. Open Releases: <https://github.com/rankun203/logseq-shell/releases>
-2. Download `logseq-shell-plugin.tar.gz`
-3. Extract it under `~/.logseq/plugins/logseq-shell`
-4. In Logseq: **Plugins → Load unpacked plugin** and select that folder
-
-#### Option B: Build from source
+### 4) Upgrade daemon
 
 ```bash
-corepack enable
-pnpm install
-pnpm --filter logseq-shell build
+cargo install --force --git https://github.com/rankun203/logseq-shell --tag v1.0.1 logseq-shelld
+~/.cargo/bin/logseq-shelld --install-service
 ```
-
-Then in Logseq desktop:
-1. Open **Plugins**
-2. Click **Load unpacked plugin**
-3. Select folder: `apps/logseq-shell`
 
 ---
 
@@ -143,23 +73,16 @@ GitHub Actions workflow (`.github/workflows/release-shelld.yml`) automatically:
   - `aarch64-apple-darwin`
 - builds `logseq-shell` plugin bundle
 - uploads build artifacts on `main`/`master` pushes
-- on tags like `v0.1.0`, publishes both daemon and plugin archives to GitHub Releases
+- on tags like `v1.0.1`, publishes both daemon and plugin archives to GitHub Releases
 
 ---
 
-## Development (moved down)
+## Development (below)
 
 ### Prerequisites
 
 - Node.js 22+ (with Corepack)
 - Rust toolchain (`rustup` + `cargo`)
-
-If Rust is not installed:
-
-```bash
-curl -fsSL https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
-```
 
 ### Install dependencies
 
