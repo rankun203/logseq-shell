@@ -537,6 +537,11 @@ fn spawn_session(
     let shell = pick_shell(args);
     let mut cmd = CommandBuilder::new(shell.clone());
 
+    // When running as a background service (launchd/systemd user), TERM may be unset.
+    // Setting TERM ensures commands like `clear` and full-screen TUIs work correctly.
+    cmd.env("TERM", "xterm-256color");
+    cmd.env("COLORTERM", "truecolor");
+
     if let Some(cwd) = cwd.as_deref().and_then(normalize_cwd) {
         cmd.cwd(cwd);
     } else if cwd.as_deref().is_some_and(|c| !c.trim().is_empty()) {
