@@ -1,0 +1,26 @@
+# Node
+node_modules/
+.pnpm-store/
+*.log
+
+# Build outputs
+apps/**/dist/
+apps/**/.vite/
+coverage/
+
+# Rust
+/target/
+**/*.rs.bk
+
+# IDE/OS
+.DS_Store
+.idea/
+.vscode/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Runtime
+*.pid

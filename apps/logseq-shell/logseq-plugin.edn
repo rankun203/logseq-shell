@@ -1,0 +1,9 @@
+{:id "logseq-shell"
+ :name "logseq-shell"
+ :title "Logseq Shell"
+ :description "Bottom/right docked shell panel powered by logseq-shelld"
+ :author "Kun + Kaybot"
+ :version "0.1.0"
+ :main "dist/index.html"
+ :icon "./public/icon.svg"
+}

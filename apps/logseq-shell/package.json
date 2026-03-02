@@ -1,0 +1,24 @@
+{
+  "name": "logseq-shell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "logseq-dateutils": "latest"
+  },
+  "devDependencies": {
+    "@logseq/libs": "^0.0.17",
+    "typescript": "^5.9.2",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.3"
+  }
+}

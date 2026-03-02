@@ -1,0 +1,12 @@
+{
+  "name": "logseq-shell-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.29.3",
+  "scripts": {
+    "dev": "pnpm --filter logseq-shell dev",
+    "build": "pnpm --filter logseq-shell build",
+    "test": "pnpm --filter logseq-shell test",
+    "lint": "pnpm --filter logseq-shell lint"
+  }
+}
