@@ -9,7 +9,7 @@ Logseq terminal integration:
 
 ## Quick install (single-command)
 
-### 1) Install daemon + auto-start service (macOS/Ubuntu)
+### 1) Install daemon + auto-start service (macOS Apple Silicon / Ubuntu)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/rankun203/logseq-shell/master/scripts/install-logseq-shelld.sh | bash
@@ -124,7 +124,6 @@ GitHub Actions workflow (`.github/workflows/release-shelld.yml`) automatically:
 
 - builds `logseq-shelld` on:
   - `x86_64-unknown-linux-gnu`
-  - `x86_64-apple-darwin`
   - `aarch64-apple-darwin`
 - builds `logseq-shell` plugin bundle
 - uploads build artifacts on `main`/`master` pushes

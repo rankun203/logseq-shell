@@ -11,7 +11,7 @@ case "$OS" in
   Darwin)
     case "$ARCH" in
       arm64|aarch64) TARGET="aarch64-apple-darwin" ;;
-      x86_64) TARGET="x86_64-apple-darwin" ;;
+      x86_64) echo "Intel macOS binary is not published. Build from source instead." >&2; exit 1 ;;
       *) echo "Unsupported macOS arch: $ARCH" >&2; exit 1 ;;
     esac
     ;;
