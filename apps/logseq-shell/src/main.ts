@@ -45,10 +45,17 @@ function getRuntimeSignature(settings: Settings): string {
 }
 
 function clampPanelSize(side: DockSide, size: number): number {
-  const min = 200
-  const max = side === 'right'
-    ? Math.max(min, window.innerWidth - 160)
-    : Math.max(min, window.innerHeight - 120)
+  const preferredMin = 200
+  const hardMin = 120
+
+  const available = side === 'right'
+    ? window.innerWidth - 160
+    : window.innerHeight - 120
+
+  // Ensure min is never greater than max on small viewports.
+  const max = Math.max(hardMin, Math.floor(available))
+  const min = Math.min(preferredMin, max)
+
   return Math.min(max, Math.max(min, Math.round(size)))
 }
 
