@@ -47,7 +47,40 @@ source "$HOME/.cargo/env"
 cargo test -p logseq-shelld
 ```
 
-## Run locally
+## Homebrew service install (logseq-shelld)
+
+This repo includes a Homebrew formula at `Formula/logseq-shelld.rb` with a service definition.
+
+### Option A: install directly from local repo
+
+```bash
+brew install --HEAD ./Formula/logseq-shelld.rb
+brew services start logseq-shelld
+```
+
+### Option B: install from tap
+
+```bash
+brew tap rankun203/logseq-shell https://github.com/rankun203/logseq-shell
+brew install --HEAD rankun203/logseq-shell/logseq-shelld
+brew services start logseq-shelld
+```
+
+Service management:
+
+```bash
+brew services list
+brew services restart logseq-shelld
+brew services stop logseq-shelld
+```
+
+By default service runs:
+
+```bash
+logseq-shelld --host 127.0.0.1 --port 34981
+```
+
+## Run locally (without Homebrew service)
 
 ### Start daemon
 
