@@ -44,6 +44,76 @@ function getRuntimeSignature(settings: Settings): string {
   })
 }
 
+function isMacLike(): boolean {
+  return /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent)
+}
+
+function normalizeKey(key: string): string {
+  const k = key.toLowerCase()
+  if (k === ' ') return 'space'
+  return k
+}
+
+function eventMatchesShortcut(e: KeyboardEvent, binding: string, macLike: boolean): boolean {
+  if (!binding?.trim()) return false
+
+  let needCtrl = false
+  let needMeta = false
+  let needAlt = false
+  let needShift = false
+  let key: string | null = null
+
+  for (const raw of binding.toLowerCase().split('+').map((x) => x.trim()).filter(Boolean)) {
+    if (raw === 'mod') {
+      if (macLike) needMeta = true
+      else needCtrl = true
+    } else if (raw === 'cmd' || raw === 'command' || raw === 'meta') {
+      needMeta = true
+    } else if (raw === 'ctrl' || raw === 'control') {
+      needCtrl = true
+    } else if (raw === 'alt' || raw === 'option') {
+      needAlt = true
+    } else if (raw === 'shift') {
+      needShift = true
+    } else {
+      key = raw
+    }
+  }
+
+  const hasExactMods =
+    e.ctrlKey === needCtrl &&
+    e.metaKey === needMeta &&
+    e.altKey === needAlt &&
+    e.shiftKey === needShift
+
+  if (!hasExactMods) return false
+  if (!key) return true
+
+  return normalizeKey(e.key) === key
+}
+
+function setupIframeShortcutToggle() {
+  const onKeyDown = (e: KeyboardEvent) => {
+    const s = getSettings()
+    const macLike = isMacLike()
+
+    const binding =
+      macLike && s.shortcutMac?.trim()
+        ? s.shortcutMac
+        : (s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding)
+
+    if (!eventMatchesShortcut(e, binding, macLike)) return
+
+    e.preventDefault()
+    e.stopPropagation()
+    ;(e as any).stopImmediatePropagation?.()
+    void togglePanel()
+  }
+
+  window.addEventListener('keydown', onKeyDown, true)
+}
+
+
 function getHostViewport(): { width: number; height: number } {
   let width = window.innerWidth
   let height = window.innerHeight
@@ -401,6 +471,8 @@ function setupLogseq() {
       label: 'Logseq Shell: Toggle panel'
     }
   )
+
+  setupIframeShortcutToggle()
 
   ls.onSettingsChanged(() => {
     const current = getSettings()
