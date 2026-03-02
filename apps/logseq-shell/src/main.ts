@@ -184,6 +184,39 @@ function syncRootDockSide(side: DockSide) {
   if (root) root.dataset.dockSide = side
 }
 
+function getNextDockSide(side: DockSide): DockSide {
+  return side === 'bottom' ? 'right' : 'bottom'
+}
+
+function getDockSwitchIcon(targetSide: DockSide): string {
+  if (targetSide === 'right') {
+    return `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4.5" y="4.5" width="15" height="15" rx="2"></rect>
+        <path d="M16 7v10"></path>
+      </svg>
+    `
+  }
+
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="4.5" y="4.5" width="15" height="15" rx="2"></rect>
+      <path d="M7 16h10"></path>
+    </svg>
+  `
+}
+
+function syncDockSwitchButton(currentSide: DockSide) {
+  const btn = document.getElementById('switch-dock-btn') as HTMLButtonElement | null
+  if (!btn) return
+
+  const targetSide = getNextDockSide(currentSide)
+  const title = targetSide === 'right' ? 'Move panel to right' : 'Move panel to bottom'
+  btn.title = title
+  btn.setAttribute('aria-label', title)
+  btn.innerHTML = getDockSwitchIcon(targetSide)
+}
+
 function renderRoot() {
   const app = document.getElementById('app')
   if (!app) return
@@ -194,7 +227,13 @@ function renderRoot() {
     <div class="shell-root" data-dock-side="bottom">
       <div id="resize-handle" class="resize-handle" aria-hidden="true"></div>
       <div class="shell-session-controls">
-        <button id="restart-session-btn" class="session-action-btn" title="Restart terminal session" aria-label="Restart terminal session">
+        <button id="switch-dock-btn" class="session-action-btn session-action-btn--light" title="Move panel to right" aria-label="Move panel to right">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4.5" y="4.5" width="15" height="15" rx="2"></rect>
+            <path d="M16 7v10"></path>
+          </svg>
+        </button>
+        <button id="restart-session-btn" class="session-action-btn session-action-btn--light" title="Restart terminal session" aria-label="Restart terminal session">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2"></path>
             <path d="M4 5v4h4"></path>
@@ -234,13 +273,40 @@ function mountTerminal() {
     cursorBlink: style.cursorBlink
   })
 
+  const switchDockBtn = document.getElementById('switch-dock-btn') as HTMLButtonElement | null
+  if (switchDockBtn) switchDockBtn.onclick = () => void switchDockSide()
+
   const restartBtn = document.getElementById('restart-session-btn') as HTMLButtonElement | null
   if (restartBtn) restartBtn.onclick = () => restartTerminalSession()
+
+  syncDockSwitchButton(settings.dockSide)
 }
 
 function restartTerminalSession() {
   ensureMounted()
   mountTerminal()
+  fitAndFocusAfterOpen()
+}
+
+function switchDockSide() {
+  const ls = getLS()
+  const s = getSettings()
+  const nextSide = getNextDockSide(s.dockSide)
+  const nextSize = clampPanelSize(nextSide, s.panelSize)
+
+  ls?.updateSettings?.({
+    dockSide: nextSide,
+    panelSize: nextSize
+  })
+
+  if (ls) {
+    setDockStyle(ls, nextSide, nextSize, true)
+  } else {
+    syncRootDockSide(nextSide)
+    syncDockSwitchButton(nextSide)
+  }
+
+  setupResizeHandle()
   fitAndFocusAfterOpen()
 }
 
@@ -265,6 +331,7 @@ function setDockStyle(ls: any, side: DockSide, size: number, enforceAttrs = fals
   if (enforceAttrs) ensureDockAttrs(ls)
   ls.setMainUIInlineStyle(calcMainUIStyle(side, size))
   syncRootDockSide(side)
+  syncDockSwitchButton(side)
 }
 
 async function applyDockStyle(override?: Partial<Pick<Settings, 'dockSide' | 'panelSize'>>) {
