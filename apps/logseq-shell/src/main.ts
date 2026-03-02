@@ -9,7 +9,6 @@ type Settings = {
   daemonUrl: string
   defaultCommand: string
   shortcutBinding: string
-  shortcutMac: string
   terminalScrollback: number
   terminalFontSize: number
   terminalLineHeight: number
@@ -22,8 +21,7 @@ const DEFAULT_SETTINGS: Settings = {
   panelSize: 320,
   daemonUrl: 'ws://127.0.0.1:34981/ws',
   defaultCommand: '',
-  shortcutBinding: 'mod+shift+t',
-  shortcutMac: '',
+  shortcutBinding: 'mod+ctrl+i',
   terminalScrollback: 5000,
   terminalFontSize: 13,
   terminalLineHeight: 1.15,
@@ -79,6 +77,19 @@ function normalizeKey(key: string): string {
   return k
 }
 
+function resolveShortcutBinding(binding: string, macLike: boolean): string {
+  if (!binding?.trim()) return binding
+
+  return binding
+    .split('+')
+    .map((part) => {
+      const token = part.trim().toLowerCase()
+      if (token !== 'mod') return token
+      return macLike ? 'cmd' : 'alt'
+    })
+    .join('+')
+}
+
 function eventMatchesShortcut(e: KeyboardEvent, binding: string, macLike: boolean): boolean {
   if (!binding?.trim()) return false
 
@@ -91,7 +102,7 @@ function eventMatchesShortcut(e: KeyboardEvent, binding: string, macLike: boolea
   for (const raw of binding.toLowerCase().split('+').map((x) => x.trim()).filter(Boolean)) {
     if (raw === 'mod') {
       if (macLike) needMeta = true
-      else needCtrl = true
+      else needAlt = true
     } else if (raw === 'cmd' || raw === 'command' || raw === 'meta') {
       needMeta = true
     } else if (raw === 'ctrl' || raw === 'control') {
@@ -122,10 +133,10 @@ function setupIframeShortcutToggle() {
     const s = getSettings()
     const macLike = isMacLike()
 
-    const binding =
-      macLike && s.shortcutMac?.trim()
-        ? s.shortcutMac
-        : (s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding)
+    const binding = resolveShortcutBinding(
+      s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding,
+      macLike
+    )
 
     if (!eventMatchesShortcut(e, binding, macLike)) return
 
@@ -587,16 +598,9 @@ function registerSettingsSchema(ls: any) {
     {
       key: 'shortcutBinding',
       type: 'string',
-      default: 'mod+shift+t',
-      title: 'Shortcut (all platforms)',
-      description: 'Requires plugin reload to rebind'
-    },
-    {
-      key: 'shortcutMac',
-      type: 'string',
-      default: '',
-      title: 'Shortcut override for macOS',
-      description: 'Optional, e.g. cmd+shift+t. Requires plugin reload.'
+      default: 'mod+ctrl+i',
+      title: 'Shortcut',
+      description: 'Default: mod+ctrl+i (mod=command on macOS, alt on Windows/Linux). Requires plugin reload to rebind.'
     }
   ])
 }
@@ -646,11 +650,15 @@ function setupLogseq() {
   const s = getSettings()
   runtimeSignature = getRuntimeSignature(s)
 
+  const shortcutBinding = resolveShortcutBinding(
+    s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding,
+    isMacLike()
+  )
+
   ls.App.registerCommandShortcut(
     {
       mode: 'global',
-      binding: s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding,
-      mac: s.shortcutMac || undefined
+      binding: shortcutBinding
     },
     () => void togglePanel(),
     {

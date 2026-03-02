@@ -51,8 +51,7 @@ This is the recommended workflow to open directly in a project folder.
 - **Panel size**: height (bottom) / width (right)
 - **Daemon websocket URL**
 - **Default command**
-- **Shortcut (all platforms)**
-- **Shortcut override for macOS**
+- **Shortcut** (default `mod+ctrl+i`: `mod` = command on macOS, alt on Windows/Linux)
 
 ### Terminal style
 
