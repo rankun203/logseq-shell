@@ -1,3 +1,4 @@
+import '@logseq/libs'
 import '@xterm/xterm/css/xterm.css'
 import { createTerminalController } from './terminal/terminal-controller'
 import { calcMainUIStyle, type DockSide } from './panel/dock-layout'
@@ -8,6 +9,8 @@ type Settings = {
   daemonUrl: string
   cwd: string
   defaultCommand: string
+  shortcutBinding: string
+  shortcutMac: string
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -15,7 +18,9 @@ const DEFAULT_SETTINGS: Settings = {
   panelSize: 320,
   daemonUrl: 'ws://127.0.0.1:34981/ws',
   cwd: '',
-  defaultCommand: ''
+  defaultCommand: '',
+  shortcutBinding: 'mod+shift+t',
+  shortcutMac: ''
 }
 
 let controller: ReturnType<typeof createTerminalController> | null = null
@@ -84,10 +89,7 @@ async function togglePanel() {
   setTimeout(() => controller?.fit(), 30)
 }
 
-function setupLogseq() {
-  const ls = getLS()
-  if (!ls) return
-
+function registerSettingsSchema(ls: any) {
   ls.useSettingsSchema([
     {
       key: 'dockSide',
@@ -108,7 +110,8 @@ function setupLogseq() {
       key: 'daemonUrl',
       type: 'string',
       default: 'ws://127.0.0.1:34981/ws',
-      title: 'Daemon websocket URL'
+      title: 'Daemon websocket URL',
+      description: 'Example: ws://127.0.0.1:34981/ws'
     },
     {
       key: 'cwd',
@@ -123,21 +126,77 @@ function setupLogseq() {
       default: '',
       title: 'Default command',
       description: 'Optional command auto-runs after spawn'
+    },
+    {
+      key: 'shortcutBinding',
+      type: 'string',
+      default: 'mod+shift+t',
+      title: 'Shortcut (all platforms)',
+      description: 'Requires plugin reload to rebind'
+    },
+    {
+      key: 'shortcutMac',
+      type: 'string',
+      default: '',
+      title: 'Shortcut override for macOS',
+      description: 'Optional, e.g. cmd+shift+t. Requires plugin reload.'
     }
   ])
+}
+
+function setupLogseq() {
+  const ls = getLS()
+  if (!ls) return
+
+  registerSettingsSchema(ls)
 
   ls.provideModel({
-    toggleShellPanel: () => void togglePanel()
+    toggleShellPanel: () => void togglePanel(),
+    openShellPanel: () => {
+      void applyDockStyle()
+      ls.showMainUI({ autoFocus: false })
+      setTimeout(() => controller?.fit(), 30)
+    }
   })
 
-  ls.App.registerUIItem(
-    'toolbar',
-    `<a class="button" data-on-click="toggleShellPanel" title="Toggle Logseq Shell">>_</a>`
+  ls.App.registerUIItem('toolbar', {
+    key: 'logseq-shell-toggle',
+    template:
+      '<a class="button" data-on-click="toggleShellPanel" title="Toggle Logseq Shell" aria-label="Toggle Logseq Shell">>_</a>'
+  })
+
+  ls.App.registerCommandPalette(
+    {
+      key: 'logseq-shell-toggle-panel',
+      label: 'Logseq Shell: Toggle panel'
+    },
+    () => void togglePanel()
   )
 
+  ls.App.registerCommandPalette(
+    {
+      key: 'logseq-shell-open-panel',
+      label: 'Logseq Shell: Open panel'
+    },
+    () => {
+      void applyDockStyle()
+      ls.showMainUI({ autoFocus: false })
+      setTimeout(() => controller?.fit(), 30)
+    }
+  )
+
+  const s = getSettings()
   ls.App.registerCommandShortcut(
-    { binding: 'mod+shift+t' },
-    () => void togglePanel()
+    {
+      mode: 'global',
+      binding: s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding,
+      mac: s.shortcutMac || undefined
+    },
+    () => void togglePanel(),
+    {
+      key: 'logseq-shell-shortcut-toggle',
+      label: 'Logseq Shell: Toggle panel'
+    }
   )
 
   ls.onSettingsChanged(() => {
@@ -147,7 +206,7 @@ function setupLogseq() {
 }
 
 function startPreviewMode() {
-  setStatus('preview mode (no logseq API)')
+  setStatus('preview mode (no Logseq host API)')
 }
 
 function main() {
@@ -155,16 +214,20 @@ function main() {
   mountTerminal()
 
   const ls = getLS()
-  if (ls?.ready) {
-    setupLogseq()
-    ls.ready(() => {
-      setStatus('ready')
-      void applyDockStyle()
-      ls.hideMainUI?.({ restoreEditingCursor: false })
-    })
-  } else {
+  if (!ls?.ready) {
     startPreviewMode()
+    return
   }
+
+  ls.ready(() => {
+    setupLogseq()
+    setStatus('ready')
+    void applyDockStyle()
+    ls.hideMainUI?.({ restoreEditingCursor: false })
+  }).catch((err: unknown) => {
+    // eslint-disable-next-line no-console
+    console.error('[logseq-shell] failed to initialize', err)
+  })
 }
 
 main()
