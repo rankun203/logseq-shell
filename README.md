@@ -7,19 +7,33 @@ Logseq terminal integration:
 
 ## User guide
 
-## Quick install (single-command)
+## Quick install
 
 ### 1) Install daemon + auto-start service (macOS Apple Silicon / Ubuntu)
 
+Use direct release binary URLs published by GitHub Actions.
+
+macOS (Apple Silicon):
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rankun203/logseq-shell/master/scripts/install-logseq-shelld.sh | bash
+TMP="$(mktemp -d)" && \
+curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-aarch64-apple-darwin.tar.gz" -o "$TMP/logseq-shelld.tgz" && \
+tar -xzf "$TMP/logseq-shelld.tgz" -C "$TMP" && \
+mkdir -p "$HOME/.local/bin" && \
+install -m 755 "$TMP/logseq-shelld-aarch64-apple-darwin" "$HOME/.local/bin/logseq-shelld" && \
+"$HOME/.local/bin/logseq-shelld" --install-service
 ```
 
-This will:
-- download latest `logseq-shelld` binary for your platform
-- place it in `~/.local/bin/logseq-shelld`
-- `chmod +x` it
-- run `logseq-shelld --install-service` (system default service manager)
+Ubuntu (x86_64):
+
+```bash
+TMP="$(mktemp -d)" && \
+curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shelld-x86_64-unknown-linux-gnu.tar.gz" -o "$TMP/logseq-shelld.tgz" && \
+tar -xzf "$TMP/logseq-shelld.tgz" -C "$TMP" && \
+mkdir -p "$HOME/.local/bin" && \
+install -m 755 "$TMP/logseq-shelld-x86_64-unknown-linux-gnu" "$HOME/.local/bin/logseq-shelld" && \
+"$HOME/.local/bin/logseq-shelld" --install-service
+```
 
 ### 2) Install plugin files
 
