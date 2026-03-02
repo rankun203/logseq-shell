@@ -190,35 +190,11 @@ function setupLogseq() {
     openShellPanel: () => void openPanel()
   })
 
-  ls.provideStyle(`
-    .injected-ui-item-toolbar a.logseq-shell-toolbar-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      opacity: 0.88;
-      transform: translateY(0.5px);
-    }
-
-    .injected-ui-item-toolbar a.logseq-shell-toolbar-icon:hover {
-      opacity: 1;
-    }
-
-    .injected-ui-item-toolbar a.logseq-shell-toolbar-icon svg,
-    .pl-injected-ui-item-toolbar a.logseq-shell-toolbar-icon svg {
-      display: block;
-      width: 17px;
-      height: 17px;
-      stroke-width: 2.2;
-    }
-  `)
 
   ls.App.registerUIItem('toolbar', {
     key: 'logseq-shell-toggle',
     template:
-      '<a class="logseq-shell-toolbar-icon" data-on-click="toggleShellPanel" title="Toggle Logseq Shell" aria-label="Toggle Logseq Shell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><path d="m7 8 3 3-3 3"></path><path d="M12 14h5"></path></svg></a>'
+      '<a class="button" data-on-click="toggleShellPanel" title="Toggle Logseq Shell" aria-label="Toggle Logseq Shell"><i class="ti ti-terminal-2" style="font-size:18px"></i></a>'
   })
 
   ls.App.registerCommandPalette(
