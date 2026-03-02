@@ -14,8 +14,7 @@
   "dependencies": {
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
-    "logseq-dateutils": "latest",
-    "@xterm/addon-unicode11": "^0.8.0"
+    "logseq-dateutils": "latest"
   },
   "devDependencies": {
     "@logseq/libs": "^0.0.17",

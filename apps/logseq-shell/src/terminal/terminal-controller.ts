@@ -1,6 +1,5 @@
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
-import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { buildXtermTheme, resolveThemeTokens } from './theme-adapter'
 import { ShellClient } from './ws-client'
 
@@ -24,18 +23,14 @@ export function createTerminalController(opts: ControllerOptions) {
     lineHeight: opts.lineHeight ?? 1.15,
     fontFamily:
       opts.fontFamily ||
-      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Cascadia Mono", "Noto Sans Mono CJK SC", "Sarasa Mono SC", "Microsoft YaHei Mono", "WenQuanYi Micro Hei Mono", monospace',
+      'Sarasa Mono SC, Noto Sans Mono CJK SC, Menlo, Monaco, monospace',
     cursorBlink: opts.cursorBlink ?? true,
     scrollback: opts.scrollback ?? 5000,
-    rescaleOverlappingGlyphs: true,
     allowProposedApi: false
   })
 
   const fitAddon = new FitAddon()
-  const unicode11Addon = new Unicode11Addon()
   term.loadAddon(fitAddon)
-  term.loadAddon(unicode11Addon)
-  term.unicode.activeVersion = '11'
   term.open(opts.container)
 
   let spawned = false
