@@ -1,7 +1,100 @@
-# logseq-shell monorepo
+# logseq-shell
 
-- `apps/logseq-shell`: Logseq plugin (TypeScript + xterm.js)
-- `crates/logseq-shelld`: local PTY daemon (Rust)
+Logseq terminal integration:
+
+- `apps/logseq-shell`: Logseq plugin UI
+- `crates/logseq-shelld`: local PTY daemon
+
+## User guide
+
+## 1) Install the daemon (`logseq-shelld`)
+
+### Option A (recommended on macOS): Homebrew
+
+```bash
+brew tap rankun203/logseq-shell https://github.com/rankun203/logseq-shell
+brew install --HEAD rankun203/logseq-shell/logseq-shelld
+```
+
+### Option B: GitHub release binaries
+
+1. Open Releases: <https://github.com/rankun203/logseq-shell/releases>
+2. Download the archive for your platform (`logseq-shelld-<target>.tar.gz`)
+3. Extract and place `logseq-shelld` in your PATH
+
+### Option C: Build from source
+
+```bash
+cargo build --release -p logseq-shelld
+# binary: target/release/logseq-shelld
+```
+
+## 2) Start daemon
+
+### Run once in foreground
+
+```bash
+logseq-shelld --host 127.0.0.1 --port 34981
+```
+
+### Install as auto-start service (macOS + Ubuntu/Linux)
+
+```bash
+logseq-shelld --install-service
+```
+
+Optional customization:
+
+```bash
+logseq-shelld \
+  --host 127.0.0.1 \
+  --port 34981 \
+  --service-name logseq-shelld \
+  --install-service
+```
+
+Platform behavior:
+
+- **macOS**: installs a LaunchAgent in `~/Library/LaunchAgents/`
+- **Ubuntu/Linux**: installs a systemd user unit in `~/.config/systemd/user/`
+
+> Linux tip: if you want user services to keep running even when logged out, run once:
+>
+> `sudo loginctl enable-linger $USER`
+
+## 3) Install the Logseq plugin
+
+Currently this repo ships as an unpacked plugin.
+
+```bash
+pnpm install
+pnpm --filter logseq-shell build
+```
+
+Then in Logseq desktop:
+
+1. Open **Plugins**
+2. Click **Load unpacked plugin**
+3. Select folder: `apps/logseq-shell`
+
+Default daemon URL in plugin settings:
+
+`ws://127.0.0.1:34981/ws`
+
+## CI/CD and releases
+
+GitHub Actions workflow (`.github/workflows/release-shelld.yml`) automatically:
+
+- builds `logseq-shelld` on `main`/`master` for:
+  - `x86_64-unknown-linux-gnu`
+  - `x86_64-apple-darwin`
+  - `aarch64-apple-darwin`
+- uploads build artifacts to workflow runs
+- when pushing a tag like `v0.1.0`, publishes binary archives to GitHub Releases
+
+---
+
+## Development (moved down)
 
 ## Prerequisites
 
@@ -47,89 +140,10 @@ source "$HOME/.cargo/env"
 cargo test -p logseq-shelld
 ```
 
-## Self-install as OS service (macOS + Ubuntu)
-
-`logseq-shelld` can install itself as an auto-start background service:
-
-```bash
-logseq-shelld --install-service
-```
-
-You can also customize runtime and service name:
-
-```bash
-logseq-shelld   --host 127.0.0.1   --port 34981   --service-name logseq-shelld   --install-service
-```
-
-Platform behavior:
-
-- **macOS**: writes a LaunchAgent plist to `~/Library/LaunchAgents/` and loads it with `launchctl`.
-- **Ubuntu/Linux (systemd user)**: writes `~/.config/systemd/user/<service>.service` and runs `systemctl --user enable --now`.
-
-> Tip: install from a stable binary path first (e.g. Homebrew) before running `--install-service`, so service upgrades stay predictable.
-
-## Homebrew service install (logseq-shelld)
-
-This repo includes a Homebrew formula at `Formula/logseq-shelld.rb` with a service definition.
-
-### Option A: install directly from local repo
-
-```bash
-brew install --HEAD ./Formula/logseq-shelld.rb
-brew services start logseq-shelld
-```
-
-### Option B: install from tap
-
-```bash
-brew tap rankun203/logseq-shell https://github.com/rankun203/logseq-shell
-brew install --HEAD rankun203/logseq-shell/logseq-shelld
-brew services start logseq-shelld
-```
-
-Service management:
-
-```bash
-brew services list
-brew services restart logseq-shelld
-brew services stop logseq-shelld
-```
-
-By default service runs:
-
-```bash
-logseq-shelld --host 127.0.0.1 --port 34981
-```
-
-## Run locally (without Homebrew service)
-
-### Start daemon
-
-```bash
-source "$HOME/.cargo/env"
-./target/debug/logseq-shelld --host 127.0.0.1 --port 34981
-```
-
-### Preview plugin UI in browser (without Logseq host APIs)
+## Local preview
 
 ```bash
 pnpm --filter logseq-shell preview --host 127.0.0.1 --port 4173
 ```
 
-Open: http://127.0.0.1:4173/
-
-## Load plugin in Logseq (desktop)
-
-1. Build plugin: `pnpm --filter logseq-shell build`
-2. In Logseq: **Plugins → Load unpacked plugin**
-3. Select folder: `apps/logseq-shell`
-4. Start daemon (`logseq-shelld`) before opening panel.
-
-## Manual smoke test checklist
-
-1. Toolbar terminal icon appears in Logseq header.
-2. Shortcut `mod+shift+t` toggles panel.
-3. Settings can switch dock side (`bottom`/`right`) and size.
-4. Terminal accepts input and runs commands.
-5. If `defaultCommand` is set (e.g. `cd /path && clear && codex`), it executes on session start.
-6. Theme changes (light/dark/custom) update terminal colors.
+Open: <http://127.0.0.1:4173/>
