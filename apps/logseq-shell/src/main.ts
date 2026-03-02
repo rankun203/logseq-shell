@@ -130,14 +130,51 @@ function fitAfterOpen() {
   setTimeout(() => controller?.fit(), 120)
 }
 
+type DragTarget = { win: Window; doc: Document }
+
+function collectDragTargets(): DragTarget[] {
+  const targets: DragTarget[] = []
+  const seen = new Set<Window>()
+
+  const push = (w: Window | null | undefined) => {
+    if (!w || seen.has(w)) return
+    try {
+      const doc = w.document
+      seen.add(w)
+      targets.push({ win: w, doc })
+    } catch {
+      // cross-origin windows are ignored
+    }
+  }
+
+  push(window)
+  try {
+    push(window.parent)
+  } catch {
+    // ignore
+  }
+  try {
+    push(window.top as Window)
+  } catch {
+    // ignore
+  }
+
+  return targets
+}
+
+
 function setupResizeHandle() {
   const handle = document.getElementById('resize-handle') as HTMLDivElement | null
   if (!handle) return
 
-  handle.onpointerdown = (ev: PointerEvent) => {
+  handle.onmousedown = (ev: MouseEvent) => {
+    if (ev.button !== 0) return
+
     const ls = getLS()
     const s = getSettings()
     const side = s.dockSide
+    const cursor = side === 'right' ? 'ew-resize' : 'ns-resize'
+
     const startSize = s.panelSize
     const startX = ev.clientX
     const startY = ev.clientY
@@ -146,20 +183,32 @@ function setupResizeHandle() {
     const root = getRootEl()
     root?.classList.add('is-resizing')
 
-    handle.setPointerCapture?.(ev.pointerId)
-    ev.preventDefault()
+    const targets = collectDragTargets()
+    const prevCursorByDoc = new Map<Document, string>()
 
-    const onMove = (e: PointerEvent) => {
+    const cleanup = () => {
+      targets.forEach(({ win, doc }) => {
+        win.removeEventListener('mousemove', onMove)
+        win.removeEventListener('mouseup', onUp)
+        const body = doc.body
+        if (body) {
+          body.classList.remove('logseq-shell-resizing')
+          body.style.cursor = prevCursorByDoc.get(doc) || ''
+        }
+      })
+      root?.classList.remove('is-resizing')
+    }
+
+    const onMove = (e: MouseEvent) => {
       const delta = side === 'right' ? (startX - e.clientX) : (startY - e.clientY)
       latestSize = clampPanelSize(side, startSize + delta)
       void applyDockStyle({ dockSide: side, panelSize: latestSize })
       controller?.fit()
+      e.preventDefault()
     }
 
     const onUp = () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      root?.classList.remove('is-resizing')
+      cleanup()
 
       if (ls?.updateSettings) {
         ls.updateSettings({ panelSize: latestSize })
@@ -168,8 +217,19 @@ function setupResizeHandle() {
       fitAfterOpen()
     }
 
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+    targets.forEach(({ win, doc }) => {
+      win.addEventListener('mousemove', onMove)
+      win.addEventListener('mouseup', onUp)
+
+      const body = doc.body
+      if (body) {
+        prevCursorByDoc.set(doc, body.style.cursor)
+        body.classList.add('logseq-shell-resizing')
+        body.style.cursor = cursor
+      }
+    })
+
+    ev.preventDefault()
   }
 }
 
