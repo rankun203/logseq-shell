@@ -15,6 +15,7 @@ export function createTerminalController(opts: ControllerOptions) {
   const term = new Terminal({
     convertEol: false,
     fontSize: 13,
+    lineHeight: 1.15,
     fontFamily:
       'var(--ls-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)',
     cursorBlink: true,
@@ -25,10 +26,27 @@ export function createTerminalController(opts: ControllerOptions) {
   term.loadAddon(fitAddon)
   term.open(opts.container)
 
+  let spawned = false
+
   const client = new ShellClient(opts.daemonUrl, async (event) => {
     if (event.type === 'output') {
       term.write(new TextDecoder().decode(event.chunk))
     } else if (event.type === 'status') {
+      if (event.status === 'connected' && !spawned) {
+        fitAddon.fit()
+        client.spawn({
+          cwd: opts.cwd,
+          command: undefined,
+          cols: term.cols,
+          rows: term.rows
+        })
+        spawned = true
+      }
+
+      if (event.status === 'disconnected') {
+        spawned = false
+      }
+
       opts.onStatus(event.detail ? `${event.status}: ${event.detail}` : event.status)
     } else if (event.type === 'ready') {
       opts.onStatus(`session ${event.sessionId}`)
@@ -60,16 +78,6 @@ export function createTerminalController(opts: ControllerOptions) {
   term.onData((data) => client.input(data))
 
   client.connect()
-  setTimeout(() => {
-    resize()
-    client.spawn({
-      cwd: opts.cwd,
-      command: undefined,
-      cols: term.cols,
-      rows: term.rows
-    })
-  }, 100)
-
   window.addEventListener('resize', resize)
   void applyTheme()
 

@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     io::{Read, Write},
     net::SocketAddr,
+    path::PathBuf,
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc, Mutex,
@@ -116,6 +117,29 @@ fn pick_shell(args: &Args) -> String {
         .unwrap_or_else(|| "/bin/bash".to_string())
 }
 
+fn normalize_cwd(cwd: &str) -> Option<PathBuf> {
+    let trimmed = cwd.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let expanded = if trimmed == "~" {
+        std::env::var("HOME").ok()?
+    } else if let Some(rest) = trimmed.strip_prefix("~/") {
+        let home = std::env::var("HOME").ok()?;
+        format!("{home}/{rest}")
+    } else {
+        trimmed.to_string()
+    };
+
+    let p = PathBuf::from(expanded);
+    if p.exists() {
+        Some(p)
+    } else {
+        None
+    }
+}
+
 fn spawn_session(
     args: &Args,
     cwd: Option<String>,
@@ -135,8 +159,13 @@ fn spawn_session(
     let shell = pick_shell(args);
     let mut cmd = CommandBuilder::new(shell.clone());
 
-    if let Some(cwd) = cwd {
+    if let Some(cwd) = cwd.as_deref().and_then(normalize_cwd) {
         cmd.cwd(cwd);
+    } else if cwd.as_deref().is_some_and(|c| !c.trim().is_empty()) {
+        warn!(
+            "ignoring invalid cwd, falling back to shell default: {:?}",
+            cwd
+        );
     }
 
     if let Some(command) = command {

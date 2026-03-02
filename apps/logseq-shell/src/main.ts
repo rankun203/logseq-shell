@@ -77,8 +77,11 @@ function mountTerminal() {
     onStatus: setStatus
   })
 
-  document.getElementById('reconnect-btn')?.addEventListener('click', () => mountTerminal())
-  document.getElementById('fit-btn')?.addEventListener('click', () => controller?.fit())
+  const reconnectBtn = document.getElementById('reconnect-btn') as HTMLButtonElement | null
+  if (reconnectBtn) reconnectBtn.onclick = () => mountTerminal()
+
+  const fitBtn = document.getElementById('fit-btn') as HTMLButtonElement | null
+  if (fitBtn) fitBtn.onclick = () => controller?.fit()
 }
 
 function ensureMounted() {
@@ -93,8 +96,14 @@ function ensureMounted() {
 async function applyDockStyle() {
   const ls = getLS()
   if (!ls) return
+
   const s = getSettings()
   ls.setMainUIInlineStyle(calcMainUIStyle(s.dockSide, s.panelSize))
+}
+
+function fitAfterOpen() {
+  setTimeout(() => controller?.fit(), 30)
+  setTimeout(() => controller?.fit(), 120)
 }
 
 async function openPanel() {
@@ -103,7 +112,7 @@ async function openPanel() {
   ensureMounted()
   await applyDockStyle()
   ls.showMainUI({ autoFocus: false })
-  setTimeout(() => controller?.fit(), 30)
+  fitAfterOpen()
 }
 
 async function togglePanel() {
@@ -112,7 +121,7 @@ async function togglePanel() {
   ensureMounted()
   await applyDockStyle()
   ls.toggleMainUI({ autoFocus: false })
-  setTimeout(() => controller?.fit(), 30)
+  fitAfterOpen()
 }
 
 function registerSettingsSchema(ls: any) {
@@ -144,14 +153,14 @@ function registerSettingsSchema(ls: any) {
       type: 'string',
       default: '',
       title: 'Working directory',
-      description: 'Leave blank to use daemon default'
+      description: 'Absolute path preferred. ~ is supported by daemon.'
     },
     {
       key: 'defaultCommand',
       type: 'string',
       default: '',
       title: 'Default command',
-      description: 'Optional command auto-runs after spawn'
+      description: 'Optional command auto-runs after shell session is ready'
     },
     {
       key: 'shortcutBinding',
@@ -244,7 +253,11 @@ function setupLogseq() {
 
   ls.onSettingsChanged(() => {
     void applyDockStyle()
-    controller?.fit()
+    if (controller) {
+      // Recreate terminal session so cwd/defaultCommand/daemonUrl changes take effect
+      mountTerminal()
+      fitAfterOpen()
+    }
   })
 }
 
@@ -263,8 +276,6 @@ function main() {
 
   ls.ready(() => {
     setupLogseq()
-    renderRoot()
-    mountTerminal()
     setStatus('ready')
     void applyDockStyle()
     ls.hideMainUI?.({ restoreEditingCursor: false })
