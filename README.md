@@ -47,6 +47,27 @@ source "$HOME/.cargo/env"
 cargo test -p logseq-shelld
 ```
 
+## Self-install as OS service (macOS + Ubuntu)
+
+`logseq-shelld` can install itself as an auto-start background service:
+
+```bash
+logseq-shelld --install-service
+```
+
+You can also customize runtime and service name:
+
+```bash
+logseq-shelld   --host 127.0.0.1   --port 34981   --service-name logseq-shelld   --install-service
+```
+
+Platform behavior:
+
+- **macOS**: writes a LaunchAgent plist to `~/Library/LaunchAgents/` and loads it with `launchctl`.
+- **Ubuntu/Linux (systemd user)**: writes `~/.config/systemd/user/<service>.service` and runs `systemctl --user enable --now`.
+
+> Tip: install from a stable binary path first (e.g. Homebrew) before running `--install-service`, so service upgrades stay predictable.
+
 ## Homebrew service install (logseq-shelld)
 
 This repo includes a Homebrew formula at `Formula/logseq-shelld.rb` with a service definition.

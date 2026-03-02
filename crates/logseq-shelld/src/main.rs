@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
+    fs,
     io::{Read, Write},
     net::SocketAddr,
     path::PathBuf,
+    process::Command,
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc, Mutex,
@@ -10,6 +12,7 @@ use std::{
     thread,
 };
 
+use anyhow::{bail, Context};
 use axum::{
     extract::{ws::Message, Query, State, WebSocketUpgrade},
     response::IntoResponse,
@@ -41,6 +44,12 @@ struct Args {
 
     #[arg(long)]
     shell: Option<String>,
+
+    #[arg(long, default_value = "logseq-shelld")]
+    service_name: String,
+
+    #[arg(long, help = "Install and start as a background service, then exit")]
+    install_service: bool,
 }
 
 #[derive(Clone)]
@@ -140,6 +149,200 @@ fn normalize_cwd(cwd: &str) -> Option<PathBuf> {
     }
 }
 
+fn service_runtime_args(args: &Args) -> Vec<String> {
+    let mut cmd = vec![
+        "--host".to_string(),
+        args.host.clone(),
+        "--port".to_string(),
+        args.port.to_string(),
+    ];
+
+    if let Some(token) = &args.token {
+        cmd.push("--token".to_string());
+        cmd.push(token.clone());
+    }
+
+    if let Some(shell) = &args.shell {
+        cmd.push("--shell".to_string());
+        cmd.push(shell.clone());
+    }
+
+    cmd
+}
+
+fn home_dir() -> anyhow::Result<PathBuf> {
+    std::env::var("HOME")
+        .map(PathBuf::from)
+        .context("HOME env var is not set")
+}
+
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+}
+
+fn shell_escape(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+fn install_service(args: &Args) -> anyhow::Result<()> {
+    match std::env::consts::OS {
+        "macos" => install_launchd_service(args),
+        "linux" => install_systemd_user_service(args),
+        other => bail!("service install is not supported on this OS: {other}"),
+    }
+}
+
+fn install_launchd_service(args: &Args) -> anyhow::Result<()> {
+    let home = home_dir()?;
+    let launch_agents_dir = home.join("Library/LaunchAgents");
+    fs::create_dir_all(&launch_agents_dir)
+        .with_context(|| format!("create {}", launch_agents_dir.display()))?;
+
+    let logs_dir = home.join("Library/Logs");
+    fs::create_dir_all(&logs_dir).with_context(|| format!("create {}", logs_dir.display()))?;
+
+    let label = format!("ai.logseq.{}", args.service_name.replace('_', "-"));
+    let plist_path = launch_agents_dir.join(format!("{label}.plist"));
+
+    let exe = std::env::current_exe().context("resolve current executable path")?;
+    let mut program_args = vec![exe.to_string_lossy().to_string()];
+    program_args.extend(service_runtime_args(args));
+
+    let program_args_xml = program_args
+        .iter()
+        .map(|a| format!("    <string>{}</string>", xml_escape(a)))
+        .collect::<Vec<_>>()
+        .join(
+            "
+",
+        );
+
+    let stdout_log = logs_dir.join(format!("{}.log", args.service_name));
+    let stderr_log = logs_dir.join(format!("{}.error.log", args.service_name));
+
+    let plist = format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>{label}</string>
+  <key>ProgramArguments</key>
+  <array>
+{program_args_xml}
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>{stdout_log}</string>
+  <key>StandardErrorPath</key>
+  <string>{stderr_log}</string>
+</dict>
+</plist>
+"#,
+        label = xml_escape(&label),
+        program_args_xml = program_args_xml,
+        stdout_log = xml_escape(&stdout_log.to_string_lossy()),
+        stderr_log = xml_escape(&stderr_log.to_string_lossy()),
+    );
+
+    fs::write(&plist_path, plist).with_context(|| format!("write {}", plist_path.display()))?;
+
+    let plist = plist_path.to_string_lossy().to_string();
+    let _ = Command::new("launchctl").args(["unload", &plist]).status();
+
+    let status = Command::new("launchctl")
+        .args(["load", "-w", &plist])
+        .status()
+        .context("run launchctl load")?;
+
+    if !status.success() {
+        bail!("launchctl load failed with status {status}");
+    }
+
+    info!(
+        "installed launchd service '{}' and started it (plist: {})",
+        label,
+        plist_path.display()
+    );
+
+    Ok(())
+}
+
+fn install_systemd_user_service(args: &Args) -> anyhow::Result<()> {
+    let home = home_dir()?;
+    let systemd_user_dir = home.join(".config/systemd/user");
+    fs::create_dir_all(&systemd_user_dir)
+        .with_context(|| format!("create {}", systemd_user_dir.display()))?;
+
+    let unit_name = format!("{}.service", args.service_name);
+    let unit_path = systemd_user_dir.join(&unit_name);
+
+    let exe = std::env::current_exe().context("resolve current executable path")?;
+    let mut cmdline = vec![exe.to_string_lossy().to_string()];
+    cmdline.extend(service_runtime_args(args));
+
+    let exec_start = cmdline
+        .iter()
+        .map(|a| format!("\"{}\"", shell_escape(a)))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    let unit = format!(
+        "[Unit]
+Description=logseq-shelld local PTY daemon
+After=default.target
+
+[Service]
+Type=simple
+ExecStart={}
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+",
+        exec_start
+    );
+
+    fs::write(&unit_path, unit).with_context(|| format!("write {}", unit_path.display()))?;
+
+    let status = Command::new("systemctl")
+        .args(["--user", "daemon-reload"])
+        .status()
+        .context("run systemctl --user daemon-reload")?;
+
+    if !status.success() {
+        bail!("systemctl --user daemon-reload failed with status {status}");
+    }
+
+    let status = Command::new("systemctl")
+        .args(["--user", "enable", "--now", &unit_name])
+        .status()
+        .context("run systemctl --user enable --now")?;
+
+    if !status.success() {
+        bail!("systemctl --user enable --now failed with status {status}");
+    }
+
+    info!(
+        "installed systemd user service '{}' and started it (unit: {})",
+        unit_name,
+        unit_path.display()
+    );
+    info!(
+        "tip: if you need auto-start without login, run once with sudo: loginctl enable-linger $USER"
+    );
+
+    Ok(())
+}
+
 fn spawn_session(
     args: &Args,
     cwd: Option<String>,
@@ -236,6 +439,12 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let args = Args::parse();
+
+    if args.install_service {
+        install_service(&args)?;
+        return Ok(());
+    }
+
     let addr: SocketAddr = format!("{}:{}", args.host, args.port).parse()?;
 
     let state = AppState { args: args.clone() };
