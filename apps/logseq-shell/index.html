@@ -35,23 +35,30 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
-        border: 1px solid var(--ls-border-color, #666);
-        background: color-mix(in srgb, var(--ls-secondary-background-color, #222) 88%, black 12%);
+        width: 26px;
+        height: 26px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        background: transparent;
         color: var(--ls-secondary-text-color, var(--ls-primary-text-color, #ddd));
+        opacity: 0.3;
         cursor: pointer;
+        transition: opacity 120ms ease, background-color 120ms ease, border-color 120ms ease, color 120ms ease;
       }
 
-      .session-action-btn:hover {
+      .shell-root:hover .session-action-btn,
+      .session-action-btn:hover,
+      .session-action-btn:focus-visible {
+        opacity: 1;
         color: var(--ls-primary-text-color, #fff);
-        border-color: var(--ls-secondary-text-color, #999);
+        border-color: var(--ls-border-color, #666);
+        background: color-mix(in srgb, var(--ls-secondary-background-color, #222) 88%, black 12%);
       }
 
-      .session-action-btn i {
-        font-size: 15px;
-        line-height: 1;
+      .session-action-btn svg {
+        width: 14px;
+        height: 14px;
+        stroke-width: 2.1;
       }
 
       .terminal-wrap {

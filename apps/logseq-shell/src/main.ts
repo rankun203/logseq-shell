@@ -195,7 +195,12 @@ function renderRoot() {
       <div id="resize-handle" class="resize-handle" aria-hidden="true"></div>
       <div class="shell-session-controls">
         <button id="restart-session-btn" class="session-action-btn" title="Restart terminal session" aria-label="Restart terminal session">
-          <i class="ti ti-refresh"></i>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2"></path>
+            <path d="M4 5v4h4"></path>
+            <path d="M4 13a8.1 8.1 0 0 0 15.5 2"></path>
+            <path d="M20 19v-4h-4"></path>
+          </svg>
         </button>
       </div>
       <div class="terminal-wrap" id="terminal"></div>
