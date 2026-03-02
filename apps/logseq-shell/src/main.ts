@@ -241,7 +241,7 @@ function mountTerminal() {
 function restartTerminalSession() {
   ensureMounted()
   mountTerminal()
-  fitAfterOpen()
+  fitAndFocusAfterOpen()
 }
 
 function ensureMounted() {
@@ -281,6 +281,16 @@ async function applyDockStyle(override?: Partial<Pick<Settings, 'dockSide' | 'pa
 function fitAfterOpen() {
   setTimeout(() => controller?.fit(), 30)
   setTimeout(() => controller?.fit(), 120)
+}
+
+function focusAfterOpen() {
+  setTimeout(() => controller?.term.focus(), 50)
+  setTimeout(() => controller?.term.focus(), 180)
+}
+
+function fitAndFocusAfterOpen() {
+  fitAfterOpen()
+  focusAfterOpen()
 }
 
 type DragTarget = { win: Window; doc: Document }
@@ -412,8 +422,8 @@ async function openPanel() {
   ensureMounted()
   setupResizeHandle()
   await applyDockStyle()
-  ls.showMainUI({ autoFocus: false })
-  fitAfterOpen()
+  ls.showMainUI({ autoFocus: true })
+  fitAndFocusAfterOpen()
 }
 
 async function togglePanel() {
@@ -421,9 +431,17 @@ async function togglePanel() {
   if (!ls) return
   ensureMounted()
   setupResizeHandle()
-  await applyDockStyle()
-  ls.toggleMainUI({ autoFocus: false })
-  fitAfterOpen()
+
+  const willShow = !Boolean(ls.isMainUIVisible)
+  if (willShow) {
+    await applyDockStyle()
+  }
+
+  ls.toggleMainUI()
+
+  if (willShow) {
+    fitAndFocusAfterOpen()
+  }
 }
 
 function registerSettingsSchema(ls: any) {
