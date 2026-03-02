@@ -84,6 +84,18 @@ logseq-shelld \
   --install-service
 ```
 
+Check service status:
+
+```bash
+logseq-shelld --service-status
+```
+
+Uninstall service:
+
+```bash
+logseq-shelld --uninstall-service
+```
+
 Platform behavior:
 - **macOS**: launchd (`~/Library/LaunchAgents/`)
 - **Ubuntu/Linux**: systemd user (`~/.config/systemd/user/`)

@@ -50,6 +50,12 @@ struct Args {
 
     #[arg(long, help = "Install and start as a background service, then exit")]
     install_service: bool,
+
+    #[arg(long, help = "Stop and remove background service, then exit")]
+    uninstall_service: bool,
+
+    #[arg(long, help = "Print background service status, then exit")]
+    service_status: bool,
 }
 
 #[derive(Clone)]
@@ -188,11 +194,47 @@ fn shell_escape(s: &str) -> String {
     s.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
+fn launchd_label(args: &Args) -> String {
+    format!("ai.logseq.{}", args.service_name.replace('_', "-"))
+}
+
+fn launchd_plist_path(args: &Args) -> anyhow::Result<PathBuf> {
+    Ok(home_dir()?
+        .join("Library/LaunchAgents")
+        .join(format!("{}.plist", launchd_label(args))))
+}
+
+fn systemd_unit_name(args: &Args) -> String {
+    format!("{}.service", args.service_name)
+}
+
+fn systemd_unit_path(args: &Args) -> anyhow::Result<PathBuf> {
+    Ok(home_dir()?
+        .join(".config/systemd/user")
+        .join(systemd_unit_name(args)))
+}
+
 fn install_service(args: &Args) -> anyhow::Result<()> {
     match std::env::consts::OS {
         "macos" => install_launchd_service(args),
         "linux" => install_systemd_user_service(args),
         other => bail!("service install is not supported on this OS: {other}"),
+    }
+}
+
+fn uninstall_service(args: &Args) -> anyhow::Result<()> {
+    match std::env::consts::OS {
+        "macos" => uninstall_launchd_service(args),
+        "linux" => uninstall_systemd_user_service(args),
+        other => bail!("service uninstall is not supported on this OS: {other}"),
+    }
+}
+
+fn service_status(args: &Args) -> anyhow::Result<()> {
+    match std::env::consts::OS {
+        "macos" => service_status_launchd(args),
+        "linux" => service_status_systemd_user(args),
+        other => bail!("service status is not supported on this OS: {other}"),
     }
 }
 
@@ -343,6 +385,139 @@ WantedBy=default.target
     Ok(())
 }
 
+fn uninstall_launchd_service(args: &Args) -> anyhow::Result<()> {
+    let label = launchd_label(args);
+    let plist_path = launchd_plist_path(args)?;
+    let plist = plist_path.to_string_lossy().to_string();
+
+    match Command::new("launchctl")
+        .args(["unload", "-w", &plist])
+        .status()
+    {
+        Ok(status) if status.success() => {}
+        Ok(status) => warn!("launchctl unload returned status {status} (continuing)"),
+        Err(e) => warn!("launchctl unload failed: {e} (continuing)"),
+    }
+
+    let _ = Command::new("launchctl").args(["remove", &label]).status();
+
+    if plist_path.exists() {
+        fs::remove_file(&plist_path).with_context(|| format!("remove {}", plist_path.display()))?;
+    }
+
+    info!(
+        "uninstalled launchd service '{}' (plist: {})",
+        label,
+        plist_path.display()
+    );
+    Ok(())
+}
+
+fn uninstall_systemd_user_service(args: &Args) -> anyhow::Result<()> {
+    let unit_name = systemd_unit_name(args);
+    let unit_path = systemd_unit_path(args)?;
+
+    match Command::new("systemctl")
+        .args(["--user", "disable", "--now", &unit_name])
+        .status()
+    {
+        Ok(status) if status.success() => {}
+        Ok(status) => warn!("systemctl --user disable --now returned status {status} (continuing)"),
+        Err(e) => warn!("systemctl --user disable --now failed: {e} (continuing)"),
+    }
+
+    if unit_path.exists() {
+        fs::remove_file(&unit_path).with_context(|| format!("remove {}", unit_path.display()))?;
+    }
+
+    let status = Command::new("systemctl")
+        .args(["--user", "daemon-reload"])
+        .status()
+        .context("run systemctl --user daemon-reload")?;
+
+    if !status.success() {
+        bail!("systemctl --user daemon-reload failed with status {status}");
+    }
+
+    info!(
+        "uninstalled systemd user service '{}' (unit: {})",
+        unit_name,
+        unit_path.display()
+    );
+    Ok(())
+}
+
+fn service_status_launchd(args: &Args) -> anyhow::Result<()> {
+    let label = launchd_label(args);
+    let plist_path = launchd_plist_path(args)?;
+
+    let loaded = Command::new("launchctl")
+        .args(["list", &label])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+
+    println!("platform: macos");
+    println!("service_name: {}", args.service_name);
+    println!("label: {}", label);
+    println!("plist_path: {}", plist_path.display());
+    println!("plist_exists: {}", plist_path.exists());
+    println!("loaded: {}", loaded);
+
+    Ok(())
+}
+
+fn service_status_systemd_user(args: &Args) -> anyhow::Result<()> {
+    let unit_name = systemd_unit_name(args);
+    let unit_path = systemd_unit_path(args)?;
+
+    let enabled_out = Command::new("systemctl")
+        .args(["--user", "is-enabled", &unit_name])
+        .output()
+        .context("run systemctl --user is-enabled")?;
+
+    let active_out = Command::new("systemctl")
+        .args(["--user", "is-active", &unit_name])
+        .output()
+        .context("run systemctl --user is-active")?;
+
+    let enabled = {
+        let stdout = String::from_utf8_lossy(&enabled_out.stdout)
+            .trim()
+            .to_string();
+        if stdout.is_empty() {
+            String::from_utf8_lossy(&enabled_out.stderr)
+                .trim()
+                .to_string()
+        } else {
+            stdout
+        }
+    };
+
+    let active = {
+        let stdout = String::from_utf8_lossy(&active_out.stdout)
+            .trim()
+            .to_string();
+        if stdout.is_empty() {
+            String::from_utf8_lossy(&active_out.stderr)
+                .trim()
+                .to_string()
+        } else {
+            stdout
+        }
+    };
+
+    println!("platform: linux");
+    println!("service_name: {}", args.service_name);
+    println!("unit_name: {}", unit_name);
+    println!("unit_path: {}", unit_path.display());
+    println!("unit_exists: {}", unit_path.exists());
+    println!("enabled: {}", enabled);
+    println!("active: {}", active);
+
+    Ok(())
+}
+
 fn spawn_session(
     args: &Args,
     cwd: Option<String>,
@@ -440,8 +615,31 @@ async fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
+    let service_action_count = [
+        args.install_service,
+        args.uninstall_service,
+        args.service_status,
+    ]
+    .into_iter()
+    .filter(|x| *x)
+    .count();
+
+    if service_action_count > 1 {
+        bail!("use only one of --install-service, --uninstall-service, or --service-status");
+    }
+
     if args.install_service {
         install_service(&args)?;
+        return Ok(());
+    }
+
+    if args.uninstall_service {
+        uninstall_service(&args)?;
+        return Ok(());
+    }
+
+    if args.service_status {
+        service_status(&args)?;
         return Ok(());
     }
 
