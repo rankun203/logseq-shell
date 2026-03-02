@@ -98,6 +98,14 @@ async function applyDockStyle() {
   if (!ls) return
 
   const s = getSettings()
+
+  // Logseq may restore an old draggable layout (dataset.inited_layout) and then
+  // ignore positional style updates (left/top/right/bottom/width/height).
+  // Force disable that mode so dock styles always apply.
+  const attrs: any = { draggable: false, resizable: false }
+  attrs['data-inited_layout'] = ''
+  ls.setMainUIAttrs(attrs)
+
   ls.setMainUIInlineStyle(calcMainUIStyle(s.dockSide, s.panelSize))
 }
 
