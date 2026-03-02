@@ -35,15 +35,16 @@ install -m 755 "$TMP/logseq-shelld-x86_64-unknown-linux-gnu" "$HOME/.local/bin/l
 "$HOME/.local/bin/logseq-shelld" --install-service
 ```
 
-### 2) Install plugin files
+### 2) Install plugin files from Release
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rankun203/logseq-shell/master/scripts/install-logseq-shell-plugin.sh | bash
+TMP="$(mktemp -d)" && \
+curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shell-plugin.tar.gz" -o "$TMP/logseq-shell-plugin.tgz" && \
+tar -xzf "$TMP/logseq-shell-plugin.tgz" -C "$TMP" && \
+mkdir -p "$HOME/.logseq/plugins" && \
+rm -rf "$HOME/.logseq/plugins/logseq-shell" && \
+cp -R "$TMP/logseq-shell-plugin" "$HOME/.logseq/plugins/logseq-shell"
 ```
-
-This installs plugin files to:
-
-`~/.logseq/plugins/logseq-shell`
 
 Then in Logseq desktop:
 1. Open **Plugins**
@@ -119,6 +120,15 @@ Platform behavior:
 > `sudo loginctl enable-linger $USER`
 
 ### Plugin (`logseq-shell`)
+
+#### Option A: GitHub release plugin archive (recommended)
+
+1. Open Releases: <https://github.com/rankun203/logseq-shell/releases>
+2. Download `logseq-shell-plugin.tar.gz`
+3. Extract it under `~/.logseq/plugins/logseq-shell`
+4. In Logseq: **Plugins → Load unpacked plugin** and select that folder
+
+#### Option B: Build from source
 
 ```bash
 corepack enable
