@@ -7,7 +7,6 @@ type Settings = {
   dockSide: DockSide
   panelSize: number
   daemonUrl: string
-  cwd: string
   defaultCommand: string
   shortcutBinding: string
   shortcutMac: string
@@ -17,7 +16,6 @@ const DEFAULT_SETTINGS: Settings = {
   dockSide: 'bottom',
   panelSize: 320,
   daemonUrl: 'ws://127.0.0.1:34981/ws',
-  cwd: '',
   defaultCommand: '',
   shortcutBinding: 'mod+shift+t',
   shortcutMac: ''
@@ -42,7 +40,6 @@ function getSettings(): Settings {
 function getRuntimeSignature(settings: Settings): string {
   return JSON.stringify({
     daemonUrl: settings.daemonUrl,
-    cwd: settings.cwd,
     defaultCommand: settings.defaultCommand
   })
 }
@@ -93,7 +90,6 @@ function mountTerminal() {
   controller = createTerminalController({
     container: terminalEl,
     daemonUrl: settings.daemonUrl,
-    cwd: settings.cwd || undefined,
     defaultCommand: settings.defaultCommand || undefined,
     onStatus: setStatus
   })
@@ -220,13 +216,6 @@ function registerSettingsSchema(ls: any) {
       default: 'ws://127.0.0.1:34981/ws',
       title: 'Daemon websocket URL',
       description: 'Example: ws://127.0.0.1:34981/ws'
-    },
-    {
-      key: 'cwd',
-      type: 'string',
-      default: '',
-      title: 'Working directory',
-      description: 'Absolute path preferred. ~ is supported by daemon.'
     },
     {
       key: 'defaultCommand',

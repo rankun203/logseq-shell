@@ -73,9 +73,9 @@ Open: http://127.0.0.1:4173/
 
 ## Manual smoke test checklist
 
-1. Toolbar button (`>_`) appears in Logseq header.
+1. Toolbar terminal icon appears in Logseq header.
 2. Shortcut `mod+shift+t` toggles panel.
 3. Settings can switch dock side (`bottom`/`right`) and size.
 4. Terminal accepts input and runs commands.
-5. If `defaultCommand` is set, it executes on session start.
+5. If `defaultCommand` is set (e.g. `cd /path && clear && codex`), it executes on session start.
 6. Theme changes (light/dark/custom) update terminal colors.

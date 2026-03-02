@@ -4,12 +4,12 @@ An integrated terminal panel for Logseq.
 
 ## What it does
 
-- Adds a **`>_` toolbar button** in Logseq
+- Adds a terminal icon button in Logseq toolbar
 - Adds command palette actions:
   - `Logseq Shell: Toggle panel`
   - `Logseq Shell: Open panel`
 - Opens a shell panel docked to **bottom** or **right**
-- Supports custom working directory and default startup command
+- Supports startup default command
 - Follows Logseq theme colors (light/dark/custom)
 
 ## Important: this plugin needs a local daemon
@@ -32,14 +32,23 @@ source "$HOME/.cargo/env"
 ```
 
 2. In Logseq, load plugin (unpacked) from this folder.
-3. Click `>_` or run command palette action to open panel.
+3. Click the toolbar terminal icon or run command palette action to open panel.
+
+## Startup in a specific folder (recommended)
+
+Set **Default command** like:
+
+```bash
+cd /absolute/path/to/project && clear && codex
+```
+
+This is the recommended workflow to open directly in a project folder.
 
 ## Plugin settings
 
 - **Dock side**: `bottom` or `right`
 - **Panel size**: height (bottom) / width (right)
 - **Daemon websocket URL**
-- **Working directory**
 - **Default command**
 - **Shortcut (all platforms)**
 - **Shortcut override for macOS**
