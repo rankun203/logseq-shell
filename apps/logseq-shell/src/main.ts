@@ -44,13 +44,34 @@ function getRuntimeSignature(settings: Settings): string {
   })
 }
 
+function getHostViewport(): { width: number; height: number } {
+  let width = window.innerWidth
+  let height = window.innerHeight
+
+  const candidates: Array<Window | null | undefined> = [window.parent, window.top]
+  for (const w of candidates) {
+    if (!w || w === window) continue
+    try {
+      if (typeof w.innerWidth === 'number' && typeof w.innerHeight === 'number') {
+        width = Math.max(width, w.innerWidth)
+        height = Math.max(height, w.innerHeight)
+      }
+    } catch {
+      // cross-origin frame, ignore
+    }
+  }
+
+  return { width, height }
+}
+
 function clampPanelSize(side: DockSide, size: number): number {
   const preferredMin = 200
   const hardMin = 120
+  const viewport = getHostViewport()
 
   const available = side === 'right'
-    ? window.innerWidth - 160
-    : window.innerHeight - 120
+    ? viewport.width - 160
+    : viewport.height - 120
 
   // Ensure min is never greater than max on small viewports.
   const max = Math.max(hardMin, Math.floor(available))
