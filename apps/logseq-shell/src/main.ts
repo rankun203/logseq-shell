@@ -184,7 +184,7 @@ function setupLogseq() {
   ls.App.registerUIItem('toolbar', {
     key: 'logseq-shell-toggle',
     template:
-      '<a class="button" data-on-click="toggleShellPanel" title="Toggle Logseq Shell" aria-label="Toggle Logseq Shell">>_</a>'
+      '<a class="button" data-on-click="toggleShellPanel" title="Toggle Logseq Shell" aria-label="Toggle Logseq Shell" style="display:inline-flex;align-items:center;justify-content:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1;letter-spacing:-0.4px;padding:0 4px;opacity:.9">&gt;_</a>'
   })
 
   ls.App.registerCommandPalette(
