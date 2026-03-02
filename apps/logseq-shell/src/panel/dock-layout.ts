@@ -11,7 +11,7 @@ export function calcMainUIStyle(side: DockSide, size: number): Record<string, st
       zIndex: '2000',
       boxShadow: '-8px 0 16px rgba(0,0,0,0.2)',
       borderLeft: '1px solid var(--ls-border-color, #333)',
-      background: 'var(--ls-primary-background-color, #111)',
+      background: 'var(--ls-secondary-background-color, var(--ls-primary-background-color, #111))',
       overflow: 'hidden'
     }
   }
@@ -25,7 +25,7 @@ export function calcMainUIStyle(side: DockSide, size: number): Record<string, st
     zIndex: '2000',
     boxShadow: '0 -8px 16px rgba(0,0,0,0.2)',
     borderTop: '1px solid var(--ls-border-color, #333)',
-    background: 'var(--ls-primary-background-color, #111)',
+    background: 'var(--ls-secondary-background-color, var(--ls-primary-background-color, #111))',
     overflow: 'hidden'
   }
 }

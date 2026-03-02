@@ -78,7 +78,7 @@ function shift(c: string, delta: number): string {
 }
 
 export function buildXtermTheme(tokens: ThemeTokenMap, mode: 'dark' | 'light' = 'dark'): ITheme {
-  const bg = parseColor(tokens['--ls-primary-background-color'], DEFAULTS.bg)
+  const bg = parseColor(tokens['--ls-secondary-background-color'] || tokens['--ls-primary-background-color'], DEFAULTS.bg)
   const fg = parseColor(tokens['--ls-primary-text-color'], DEFAULTS.fg)
   const accent = parseColor(tokens['--ls-active-primary-color'] || tokens['--ls-link-text-color'], DEFAULTS.accent)
 
