@@ -10,6 +10,11 @@ type Settings = {
   defaultCommand: string
   shortcutBinding: string
   shortcutMac: string
+  terminalScrollback: number
+  terminalFontSize: number
+  terminalLineHeight: number
+  terminalFontFamily: string
+  terminalCursorBlink: boolean
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -18,7 +23,12 @@ const DEFAULT_SETTINGS: Settings = {
   daemonUrl: 'ws://127.0.0.1:34981/ws',
   defaultCommand: '',
   shortcutBinding: 'mod+shift+t',
-  shortcutMac: ''
+  shortcutMac: '',
+  terminalScrollback: 5000,
+  terminalFontSize: 13,
+  terminalLineHeight: 1.15,
+  terminalFontFamily: '',
+  terminalCursorBlink: true
 }
 
 let controller: ReturnType<typeof createTerminalController> | null = null
@@ -40,8 +50,23 @@ function getSettings(): Settings {
 function getRuntimeSignature(settings: Settings): string {
   return JSON.stringify({
     daemonUrl: settings.daemonUrl,
-    defaultCommand: settings.defaultCommand
+    defaultCommand: settings.defaultCommand,
+    terminalScrollback: settings.terminalScrollback,
+    terminalFontSize: settings.terminalFontSize,
+    terminalLineHeight: settings.terminalLineHeight,
+    terminalFontFamily: settings.terminalFontFamily,
+    terminalCursorBlink: settings.terminalCursorBlink
   })
+}
+
+function getTerminalStyleOptions(settings: Settings) {
+  return {
+    scrollback: Math.max(500, Math.min(100_000, Math.floor(settings.terminalScrollback || 5000))),
+    fontSize: Math.max(10, Math.min(28, Number(settings.terminalFontSize || 13))),
+    lineHeight: Math.max(1, Math.min(2, Number(settings.terminalLineHeight || 1.15))),
+    fontFamily: (settings.terminalFontFamily || '').trim(),
+    cursorBlink: Boolean(settings.terminalCursorBlink)
+  }
 }
 
 function isMacLike(): boolean {
@@ -185,11 +210,18 @@ function mountTerminal() {
   const settings = getSettings()
 
   controller?.dispose()
+  const style = getTerminalStyleOptions(settings)
+
   controller = createTerminalController({
     container: terminalEl,
     daemonUrl: settings.daemonUrl,
     defaultCommand: settings.defaultCommand || undefined,
-    onStatus: setStatus
+    onStatus: setStatus,
+    scrollback: style.scrollback,
+    fontSize: style.fontSize,
+    lineHeight: style.lineHeight,
+    fontFamily: style.fontFamily || undefined,
+    cursorBlink: style.cursorBlink
   })
 }
 
@@ -405,6 +437,48 @@ function registerSettingsSchema(ls: any) {
       default: '',
       title: 'Default command',
       description: 'Optional command auto-runs after shell session is ready'
+    },
+    {
+      key: 'terminalStyleSection',
+      type: 'heading',
+      default: null,
+      title: 'Terminal style',
+      description: 'Appearance and scrollback settings for the shell panel'
+    },
+    {
+      key: 'terminalScrollback',
+      type: 'number',
+      default: 5000,
+      title: 'Scrollback lines',
+      description: 'How many lines are kept in terminal history (recommended: 5000)'
+    },
+    {
+      key: 'terminalFontSize',
+      type: 'number',
+      default: 13,
+      title: 'Font size',
+      description: 'Terminal font size in pixels'
+    },
+    {
+      key: 'terminalLineHeight',
+      type: 'number',
+      default: 1.15,
+      title: 'Line height',
+      description: 'Terminal line height multiplier (1.0 to 2.0)'
+    },
+    {
+      key: 'terminalFontFamily',
+      type: 'string',
+      default: '',
+      title: 'Font family (optional)',
+      description: 'Leave empty to inherit Logseq default monospaced font'
+    },
+    {
+      key: 'terminalCursorBlink',
+      type: 'boolean',
+      default: true,
+      title: 'Blinking cursor',
+      description: 'Enable/disable terminal cursor blink'
     },
     {
       key: 'shortcutBinding',

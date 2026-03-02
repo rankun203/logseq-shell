@@ -53,6 +53,14 @@ This is the recommended workflow to open directly in a project folder.
 - **Shortcut (all platforms)**
 - **Shortcut override for macOS**
 
+### Terminal style
+
+- **Scrollback lines** (default `5000`)
+- **Font size**
+- **Line height**
+- **Font family (optional)**
+- **Blinking cursor**
+
 > If you change shortcut settings, reload plugin once to apply the new keybinding.
 
 ## Notes

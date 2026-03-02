@@ -9,16 +9,23 @@ export type ControllerOptions = {
   cwd?: string
   defaultCommand?: string
   onStatus: (text: string) => void
+  scrollback?: number
+  fontSize?: number
+  lineHeight?: number
+  fontFamily?: string
+  cursorBlink?: boolean
 }
 
 export function createTerminalController(opts: ControllerOptions) {
   const term = new Terminal({
     convertEol: false,
-    fontSize: 13,
-    lineHeight: 1.15,
+    fontSize: opts.fontSize ?? 13,
+    lineHeight: opts.lineHeight ?? 1.15,
     fontFamily:
+      opts.fontFamily ||
       'var(--ls-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)',
-    cursorBlink: true,
+    cursorBlink: opts.cursorBlink ?? true,
+    scrollback: opts.scrollback ?? 5000,
     allowProposedApi: false
   })
 
