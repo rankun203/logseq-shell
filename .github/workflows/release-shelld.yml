@@ -7,6 +7,7 @@ on:
       - master
     tags:
       - "v*"
+      - "[0-9]*"
   workflow_dispatch:
 
 permissions:
