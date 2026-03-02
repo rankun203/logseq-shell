@@ -11,7 +11,7 @@ Logseq terminal integration:
 
 ```bash
 cargo install --git https://github.com/rankun203/logseq-shell --tag v1.0.2 logseq-shelld
-~/.cargo/bin/logseq-shelld --install-service
+logseq-shelld --install-service
 ```
 
 This avoids macOS downloaded-binary quarantine issues and installs from source directly.
@@ -21,6 +21,12 @@ If `cargo` is missing:
 
 ```bash
 curl -fsSL https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
+```
+
+If `logseq-shelld` is not found, load Cargo env (or add `~/.cargo/bin` to your shell PATH):
+
+```bash
 source "$HOME/.cargo/env"
 ```
 
@@ -42,8 +48,8 @@ Default daemon URL in plugin settings:
 ### 3) Service management
 
 ```bash
-~/.cargo/bin/logseq-shelld --service-status
-~/.cargo/bin/logseq-shelld --uninstall-service
+logseq-shelld --service-status
+logseq-shelld --uninstall-service
 ```
 
 Platform behavior:
@@ -58,7 +64,7 @@ Platform behavior:
 
 ```bash
 cargo install --force --git https://github.com/rankun203/logseq-shell --tag v1.0.2 logseq-shelld
-~/.cargo/bin/logseq-shelld --install-service
+logseq-shelld --install-service
 ```
 
 ---
