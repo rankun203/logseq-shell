@@ -39,7 +39,11 @@ function getSettings(): Settings {
 }
 
 function renderRoot() {
-  const app = document.getElementById('app')!
+  const app = document.getElementById('app')
+  if (!app) return
+
+  if (app.dataset.rendered === '1') return
+
   app.innerHTML = `
     <div class="shell-root">
       <div class="shell-toolbar">
@@ -50,6 +54,7 @@ function renderRoot() {
       <div class="terminal-wrap" id="terminal"></div>
     </div>
   `
+  app.dataset.rendered = '1'
 }
 
 function setStatus(text: string) {
@@ -58,7 +63,9 @@ function setStatus(text: string) {
 }
 
 function mountTerminal() {
-  const terminalEl = document.getElementById('terminal')!
+  const terminalEl = document.getElementById('terminal')
+  if (!terminalEl) return
+
   const settings = getSettings()
 
   controller?.dispose()
@@ -74,6 +81,15 @@ function mountTerminal() {
   document.getElementById('fit-btn')?.addEventListener('click', () => controller?.fit())
 }
 
+function ensureMounted() {
+  if (!document.getElementById('app')?.dataset.rendered) {
+    renderRoot()
+  }
+  if (!controller) {
+    mountTerminal()
+  }
+}
+
 async function applyDockStyle() {
   const ls = getLS()
   if (!ls) return
@@ -81,9 +97,19 @@ async function applyDockStyle() {
   ls.setMainUIInlineStyle(calcMainUIStyle(s.dockSide, s.panelSize))
 }
 
+async function openPanel() {
+  const ls = getLS()
+  if (!ls) return
+  ensureMounted()
+  await applyDockStyle()
+  ls.showMainUI({ autoFocus: false })
+  setTimeout(() => controller?.fit(), 30)
+}
+
 async function togglePanel() {
   const ls = getLS()
   if (!ls) return
+  ensureMounted()
   await applyDockStyle()
   ls.toggleMainUI({ autoFocus: false })
   setTimeout(() => controller?.fit(), 30)
@@ -152,11 +178,7 @@ function setupLogseq() {
 
   ls.provideModel({
     toggleShellPanel: () => void togglePanel(),
-    openShellPanel: () => {
-      void applyDockStyle()
-      ls.showMainUI({ autoFocus: false })
-      setTimeout(() => controller?.fit(), 30)
-    }
+    openShellPanel: () => void openPanel()
   })
 
   ls.App.registerUIItem('toolbar', {
@@ -178,11 +200,7 @@ function setupLogseq() {
       key: 'logseq-shell-open-panel',
       label: 'Logseq Shell: Open panel'
     },
-    () => {
-      void applyDockStyle()
-      ls.showMainUI({ autoFocus: false })
-      setTimeout(() => controller?.fit(), 30)
-    }
+    () => void openPanel()
   )
 
   const s = getSettings()
@@ -206,13 +224,12 @@ function setupLogseq() {
 }
 
 function startPreviewMode() {
+  renderRoot()
+  mountTerminal()
   setStatus('preview mode (no Logseq host API)')
 }
 
 function main() {
-  renderRoot()
-  mountTerminal()
-
   const ls = getLS()
   if (!ls?.ready) {
     startPreviewMode()
@@ -221,6 +238,8 @@ function main() {
 
   ls.ready(() => {
     setupLogseq()
+    renderRoot()
+    mountTerminal()
     setStatus('ready')
     void applyDockStyle()
     ls.hideMainUI?.({ restoreEditingCursor: false })

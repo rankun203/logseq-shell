@@ -15,7 +15,8 @@ export function createTerminalController(opts: ControllerOptions) {
   const term = new Terminal({
     convertEol: false,
     fontSize: 13,
-    fontFamily: 'var(--ls-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)',
+    fontFamily:
+      'var(--ls-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace)',
     cursorBlink: true,
     allowProposedApi: false
   })
@@ -40,9 +41,15 @@ export function createTerminalController(opts: ControllerOptions) {
   })
 
   const applyTheme = async () => {
-    const ls = (globalThis as any).logseq
-    const mode = ls?.baseInfo?.theme === 'light' ? 'light' : 'dark'
-    term.options.theme = buildXtermTheme(await resolveThemeTokens(), mode)
+    try {
+      const ls = (globalThis as any).logseq
+      const mode = ls?.baseInfo?.theme === 'light' ? 'light' : 'dark'
+      term.options.theme = buildXtermTheme(await resolveThemeTokens(), mode)
+    } catch (e) {
+      // ignore startup/theme resolution issues and keep defaults
+      // eslint-disable-next-line no-console
+      console.warn('[logseq-shell] theme apply skipped', e)
+    }
   }
 
   const resize = () => {
@@ -67,8 +74,12 @@ export function createTerminalController(opts: ControllerOptions) {
   void applyTheme()
 
   const ls = (globalThis as any).logseq
-  if (ls?.App?.onThemeModeChanged) {
-    ls.App.onThemeModeChanged(() => void applyTheme())
+  if (ls?.App?.onThemeModeChanged && ls?.connected) {
+    try {
+      ls.App.onThemeModeChanged(() => void applyTheme())
+    } catch {
+      // ignore when not connected yet
+    }
   }
 
   return {
