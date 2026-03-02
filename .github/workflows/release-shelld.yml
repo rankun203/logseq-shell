@@ -71,12 +71,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Enable Corepack (pnpm)
         run: |
           corepack enable
           corepack prepare pnpm@10.29.3 --activate
+          echo "$(dirname "$(corepack which pnpm)")" >> "$GITHUB_PATH"
+
+      - name: Verify pnpm
+        run: |
+          corepack which pnpm
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
