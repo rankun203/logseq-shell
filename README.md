@@ -9,20 +9,13 @@ Logseq terminal integration:
 
 ## 1) Install the daemon (`logseq-shelld`)
 
-### Option A (recommended on macOS): Homebrew
-
-```bash
-brew tap rankun203/logseq-shell https://github.com/rankun203/logseq-shell
-brew install --HEAD rankun203/logseq-shell/logseq-shelld
-```
-
-### Option B: GitHub release binaries
+### Option A: GitHub release binaries (recommended)
 
 1. Open Releases: <https://github.com/rankun203/logseq-shell/releases>
 2. Download the archive for your platform (`logseq-shelld-<target>.tar.gz`)
 3. Extract and place `logseq-shelld` in your PATH
 
-### Option C: Build from source
+### Option B: Build from source
 
 ```bash
 cargo build --release -p logseq-shelld
@@ -37,7 +30,7 @@ cargo build --release -p logseq-shelld
 logseq-shelld --host 127.0.0.1 --port 34981
 ```
 
-### Install as auto-start service (macOS + Ubuntu/Linux)
+### Install as auto-start service (system default)
 
 ```bash
 logseq-shelld --install-service
@@ -55,7 +48,7 @@ logseq-shelld \
 
 Platform behavior:
 
-- **macOS**: installs a LaunchAgent in `~/Library/LaunchAgents/`
+- **macOS**: installs a LaunchAgent in `~/Library/LaunchAgents/` (launchd)
 - **Ubuntu/Linux**: installs a systemd user unit in `~/.config/systemd/user/`
 
 > Linux tip: if you want user services to keep running even when logged out, run once:
