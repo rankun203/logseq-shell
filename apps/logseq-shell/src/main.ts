@@ -46,11 +46,6 @@ function renderRoot() {
 
   app.innerHTML = `
     <div class="shell-root">
-      <div class="shell-toolbar">
-        <button id="reconnect-btn">Reconnect</button>
-        <button id="fit-btn">Fit</button>
-        <span class="status" id="shell-status">booting...</span>
-      </div>
       <div class="terminal-wrap" id="terminal"></div>
     </div>
   `
@@ -77,11 +72,6 @@ function mountTerminal() {
     onStatus: setStatus
   })
 
-  const reconnectBtn = document.getElementById('reconnect-btn') as HTMLButtonElement | null
-  if (reconnectBtn) reconnectBtn.onclick = () => mountTerminal()
-
-  const fitBtn = document.getElementById('fit-btn') as HTMLButtonElement | null
-  if (fitBtn) fitBtn.onclick = () => controller?.fit()
 }
 
 function ensureMounted() {
