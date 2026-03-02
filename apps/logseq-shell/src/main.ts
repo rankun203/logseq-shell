@@ -77,19 +77,6 @@ function normalizeKey(key: string): string {
   return k
 }
 
-function resolveShortcutBinding(binding: string, macLike: boolean): string {
-  if (!binding?.trim()) return binding
-
-  return binding
-    .split('+')
-    .map((part) => {
-      const token = part.trim().toLowerCase()
-      if (token !== 'mod') return token
-      return macLike ? 'cmd' : 'alt'
-    })
-    .join('+')
-}
-
 function eventMatchesShortcut(e: KeyboardEvent, binding: string, macLike: boolean): boolean {
   if (!binding?.trim()) return false
 
@@ -102,7 +89,7 @@ function eventMatchesShortcut(e: KeyboardEvent, binding: string, macLike: boolea
   for (const raw of binding.toLowerCase().split('+').map((x) => x.trim()).filter(Boolean)) {
     if (raw === 'mod') {
       if (macLike) needMeta = true
-      else needAlt = true
+      else needCtrl = true
     } else if (raw === 'cmd' || raw === 'command' || raw === 'meta') {
       needMeta = true
     } else if (raw === 'ctrl' || raw === 'control') {
@@ -133,10 +120,7 @@ function setupIframeShortcutToggle() {
     const s = getSettings()
     const macLike = isMacLike()
 
-    const binding = resolveShortcutBinding(
-      s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding,
-      macLike
-    )
+    const binding = s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding
 
     if (!eventMatchesShortcut(e, binding, macLike)) return
 
@@ -600,7 +584,7 @@ function registerSettingsSchema(ls: any) {
       type: 'string',
       default: 'mod+ctrl+i',
       title: 'Shortcut',
-      description: 'Default: mod+ctrl+i (mod=command on macOS, alt on Windows/Linux). Requires plugin reload to rebind.'
+      description: 'Default: mod+ctrl+i. `mod` is platform-aware (handled by Logseq). Requires plugin reload to rebind.'
     }
   ])
 }
@@ -650,15 +634,10 @@ function setupLogseq() {
   const s = getSettings()
   runtimeSignature = getRuntimeSignature(s)
 
-  const shortcutBinding = resolveShortcutBinding(
-    s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding,
-    isMacLike()
-  )
-
   ls.App.registerCommandShortcut(
     {
       mode: 'global',
-      binding: shortcutBinding
+      binding: s.shortcutBinding || DEFAULT_SETTINGS.shortcutBinding
     },
     () => void togglePanel(),
     {
