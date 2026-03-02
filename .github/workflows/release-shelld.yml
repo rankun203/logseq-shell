@@ -76,18 +76,15 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@10.29.3 --activate
-          echo "$(dirname "$(corepack which pnpm)")" >> "$GITHUB_PATH"
 
       - name: Verify pnpm
-        run: |
-          corepack which pnpm
-          pnpm --version
+        run: corepack pnpm --version
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: corepack pnpm install --frozen-lockfile
 
       - name: Build plugin
-        run: pnpm --filter logseq-shell build
+        run: corepack pnpm --filter logseq-shell build
 
       - name: Package plugin artifact
         shell: bash
