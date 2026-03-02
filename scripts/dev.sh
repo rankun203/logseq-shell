@@ -17,4 +17,5 @@ cleanup() {
 trap cleanup EXIT
 
 echo "[2/2] Starting plugin dev server"
+corepack enable
 pnpm --filter logseq-shell dev

@@ -107,6 +107,7 @@ Platform behavior:
 ### Plugin (`logseq-shell`)
 
 ```bash
+corepack enable
 pnpm install
 pnpm --filter logseq-shell build
 ```
@@ -135,8 +136,7 @@ GitHub Actions workflow (`.github/workflows/release-shelld.yml`) automatically:
 
 ### Prerequisites
 
-- Node.js 22+
-- pnpm 10+
+- Node.js 22+ (with Corepack)
 - Rust toolchain (`rustup` + `cargo`)
 
 If Rust is not installed:
@@ -149,6 +149,7 @@ source "$HOME/.cargo/env"
 ### Install dependencies
 
 ```bash
+corepack enable
 pnpm install
 source "$HOME/.cargo/env"
 cargo fetch
