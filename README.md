@@ -27,9 +27,7 @@ source "$HOME/.cargo/env"
 ### 2) Install plugin files from Release
 
 ```bash
-mkdir -p "$HOME/.logseq/plugins" && rm -rf "$HOME/.logseq/plugins/logseq-shell"
 curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shell-plugin.tar.gz" | tar -xz -C "$HOME/.logseq/plugins"
-mv "$HOME/.logseq/plugins/logseq-shell-plugin" "$HOME/.logseq/plugins/logseq-shell"
 ```
 
 Then in Logseq desktop:
