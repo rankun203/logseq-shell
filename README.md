@@ -90,19 +90,6 @@ cp -R "$(pwd)/apps/skills/logseq-local-http" "$HOME/.claude/skills/"
 
 ---
 
-## CI/CD and release artifacts
-
-GitHub Actions workflow (`.github/workflows/release-shelld.yml`) automatically:
-
-- builds `logseq-shelld` on:
-  - `x86_64-unknown-linux-gnu`
-  - `aarch64-apple-darwin`
-- builds `logseq-shell` plugin bundle
-- uploads build artifacts on `main`/`master` pushes
-- on tags like `0.2.1` (or `v0.2.1`), publishes both daemon and plugin archives to GitHub Releases
-
----
-
 ## Development (below)
 
 ### Prerequisites
