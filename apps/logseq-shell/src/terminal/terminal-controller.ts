@@ -35,6 +35,16 @@ export function createTerminalController(opts: ControllerOptions) {
   term.open(opts.container)
 
   let spawned = false
+  let sessionReady = false
+  let authHintShown = false
+
+  const writeAuthHint = () => {
+    if (authHintShown) return
+    authHintShown = true
+    term.writeln(
+      '\r\n[logseq-shell] API key missing or invalid (when auth is enabled). Please find it from logseq-shelld and fill it in plugin settings → Daemon API key (optional).'
+    )
+  }
 
   const client = new ShellClient(
     opts.daemonUrl,
@@ -53,8 +63,20 @@ export function createTerminalController(opts: ControllerOptions) {
           spawned = true
         }
 
+        if (event.status === 'session-ready') {
+          sessionReady = true
+        }
+
+        if (event.status === 'error' && !sessionReady) {
+          writeAuthHint()
+        }
+
         if (event.status === 'disconnected') {
+          if (!sessionReady) {
+            writeAuthHint()
+          }
           spawned = false
+          sessionReady = false
         }
 
         opts.onStatus(event.detail ? `${event.status}: ${event.detail}` : event.status)

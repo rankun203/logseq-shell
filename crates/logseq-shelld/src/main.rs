@@ -738,7 +738,11 @@ async fn ws_handler(
     if let Some(expected) = configured_api_key(&state.args) {
         let got = query_api_key(&query);
         if got != Some(expected) {
-            return axum::http::StatusCode::UNAUTHORIZED.into_response();
+            return (
+                axum::http::StatusCode::UNAUTHORIZED,
+                "api key missing or invalid; find it from logseq-shelld and fill plugin settings (Daemon API key)",
+            )
+                .into_response();
         }
     }
 
