@@ -23,6 +23,8 @@ Default websocket URL:
 
 If daemon is not running, panel will open but terminal won't be interactive.
 
+Optional auth: run daemon with `--api-key <your-key>`, then set the same value in plugin setting **Daemon API key (optional)**.
+
 ## Quick start
 
 1. Start daemon:
@@ -30,6 +32,8 @@ If daemon is not running, panel will open but terminal won't be interactive.
 ```bash
 source "$HOME/.cargo/env"
 /path/to/logseq-shell/target/debug/logseq-shelld --host 127.0.0.1 --port 34981
+# optional auth:
+# /path/to/logseq-shell/target/debug/logseq-shelld --host 127.0.0.1 --port 34981 --api-key "change-me"
 ```
 
 2. In Logseq, load plugin (unpacked) from this folder.
@@ -50,6 +54,7 @@ This is the recommended workflow to open directly in a project folder.
 - **Dock side**: `bottom` or `right`
 - **Panel size**: height (bottom) / width (right)
 - **Daemon websocket URL**
+- **Daemon API key (optional)**
 - **Default command**
 - **Shortcut** (default `mod+ctrl+i`; `mod` is platform-aware)
 

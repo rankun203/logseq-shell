@@ -7,6 +7,7 @@ type Settings = {
   dockSide: DockSide
   panelSize: number
   daemonUrl: string
+  daemonApiKey: string
   defaultCommand: string
   shortcutBinding: string
   terminalScrollback: number
@@ -20,6 +21,7 @@ const DEFAULT_SETTINGS: Settings = {
   dockSide: 'bottom',
   panelSize: 320,
   daemonUrl: 'ws://127.0.0.1:34981/ws',
+  daemonApiKey: '',
   defaultCommand: '',
   shortcutBinding: 'mod+ctrl+i',
   terminalScrollback: 5000,
@@ -48,6 +50,7 @@ function getSettings(): Settings {
 function getRuntimeSignature(settings: Settings): string {
   return JSON.stringify({
     daemonUrl: settings.daemonUrl,
+    daemonApiKey: settings.daemonApiKey,
     defaultCommand: settings.defaultCommand,
     terminalScrollback: settings.terminalScrollback,
     terminalFontSize: settings.terminalFontSize,
@@ -259,6 +262,7 @@ function mountTerminal() {
   controller = createTerminalController({
     container: terminalEl,
     daemonUrl: settings.daemonUrl,
+    daemonApiKey: settings.daemonApiKey || undefined,
     defaultCommand: settings.defaultCommand || undefined,
     onStatus: setStatus,
     scrollback: style.scrollback,
@@ -529,6 +533,13 @@ function registerSettingsSchema(ls: any) {
       default: 'ws://127.0.0.1:34981/ws',
       title: 'Daemon websocket URL',
       description: 'Example: ws://127.0.0.1:34981/ws'
+    },
+    {
+      key: 'daemonApiKey',
+      type: 'string',
+      default: '',
+      title: 'Daemon API key (optional)',
+      description: 'Set the same value as logseq-shelld --api-key. When set, plugin sends this key when opening websocket connection.'
     },
     {
       key: 'defaultCommand',

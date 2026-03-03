@@ -39,7 +39,10 @@ struct Args {
     #[arg(long, default_value_t = 34981)]
     port: u16,
 
-    #[arg(long)]
+    #[arg(long = "api-key", help = "Require this API key from websocket clients")]
+    api_key: Option<String>,
+
+    #[arg(long, hide = true)]
     token: Option<String>,
 
     #[arg(long)]
@@ -132,6 +135,22 @@ fn pick_shell(args: &Args) -> String {
         .unwrap_or_else(|| "/bin/bash".to_string())
 }
 
+fn configured_api_key(args: &Args) -> Option<&str> {
+    args.api_key
+        .as_deref()
+        .or(args.token.as_deref())
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+}
+
+fn query_api_key(query: &HashMap<String, String>) -> Option<&str> {
+    query
+        .get("api_key")
+        .or_else(|| query.get("apiKey"))
+        .or_else(|| query.get("token"))
+        .map(|s| s.as_str())
+}
+
 fn normalize_cwd(cwd: &str) -> Option<PathBuf> {
     let trimmed = cwd.trim();
     if trimmed.is_empty() {
@@ -163,9 +182,9 @@ fn service_runtime_args(args: &Args) -> Vec<String> {
         args.port.to_string(),
     ];
 
-    if let Some(token) = &args.token {
-        cmd.push("--token".to_string());
-        cmd.push(token.clone());
+    if let Some(api_key) = configured_api_key(args) {
+        cmd.push("--api-key".to_string());
+        cmd.push(api_key.to_string());
     }
 
     // Bake the shell into service args so service restarts keep using the
@@ -702,6 +721,9 @@ async fn main() -> anyhow::Result<()> {
         .with_state(state);
 
     info!("logseq-shelld listening on ws://{}/ws", addr);
+    if configured_api_key(&args).is_some() {
+        info!("websocket API key auth enabled");
+    }
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
@@ -713,8 +735,8 @@ async fn ws_handler(
     State(state): State<AppState>,
     Query(query): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
-    if let Some(expected) = state.args.token.as_ref() {
-        let got = query.get("token");
+    if let Some(expected) = configured_api_key(&state.args) {
+        let got = query_api_key(&query);
         if got != Some(expected) {
             return axum::http::StatusCode::UNAUTHORIZED.into_response();
         }
@@ -892,7 +914,9 @@ async fn handle_client_msg(
 
 #[cfg(test)]
 mod tests {
-    use super::ClientMsg;
+    use std::collections::HashMap;
+
+    use super::{query_api_key, ClientMsg};
 
     #[test]
     fn parse_spawn_message() {
@@ -912,5 +936,20 @@ mod tests {
             }
             _ => panic!("unexpected variant"),
         }
+    }
+
+    #[test]
+    fn query_api_key_supports_multiple_param_names() {
+        let mut q = HashMap::new();
+        q.insert("api_key".to_string(), "k1".to_string());
+        assert_eq!(query_api_key(&q), Some("k1"));
+
+        q.clear();
+        q.insert("apiKey".to_string(), "k2".to_string());
+        assert_eq!(query_api_key(&q), Some("k2"));
+
+        q.clear();
+        q.insert("token".to_string(), "k3".to_string());
+        assert_eq!(query_api_key(&q), Some("k3"));
     }
 }

@@ -6,6 +6,7 @@ import { ShellClient } from './ws-client'
 export type ControllerOptions = {
   container: HTMLElement
   daemonUrl: string
+  daemonApiKey?: string
   cwd?: string
   defaultCommand?: string
   onStatus: (text: string) => void
@@ -35,35 +36,39 @@ export function createTerminalController(opts: ControllerOptions) {
 
   let spawned = false
 
-  const client = new ShellClient(opts.daemonUrl, async (event) => {
-    if (event.type === 'output') {
-      term.write(new TextDecoder().decode(event.chunk))
-    } else if (event.type === 'status') {
-      if (event.status === 'connected' && !spawned) {
-        fitAddon.fit()
-        client.spawn({
-          cwd: opts.cwd,
-          command: undefined,
-          cols: term.cols,
-          rows: term.rows
-        })
-        spawned = true
-      }
+  const client = new ShellClient(
+    opts.daemonUrl,
+    async (event) => {
+      if (event.type === 'output') {
+        term.write(new TextDecoder().decode(event.chunk))
+      } else if (event.type === 'status') {
+        if (event.status === 'connected' && !spawned) {
+          fitAddon.fit()
+          client.spawn({
+            cwd: opts.cwd,
+            command: undefined,
+            cols: term.cols,
+            rows: term.rows
+          })
+          spawned = true
+        }
 
-      if (event.status === 'disconnected') {
-        spawned = false
-      }
+        if (event.status === 'disconnected') {
+          spawned = false
+        }
 
-      opts.onStatus(event.detail ? `${event.status}: ${event.detail}` : event.status)
-    } else if (event.type === 'ready') {
-      opts.onStatus(`session ${event.sessionId}`)
-      if (opts.defaultCommand?.trim()) {
-        client.input(`${opts.defaultCommand}\r`)
+        opts.onStatus(event.detail ? `${event.status}: ${event.detail}` : event.status)
+      } else if (event.type === 'ready') {
+        opts.onStatus(`session ${event.sessionId}`)
+        if (opts.defaultCommand?.trim()) {
+          client.input(`${opts.defaultCommand}\r`)
+        }
+      } else if (event.type === 'exit') {
+        term.writeln(`\r\n[logseq-shelld exited code=${event.code}${event.signal ? ` signal=${event.signal}` : ''}]`)
       }
-    } else if (event.type === 'exit') {
-      term.writeln(`\r\n[logseq-shelld exited code=${event.code}${event.signal ? ` signal=${event.signal}` : ''}]`)
-    }
-  })
+    },
+    opts.daemonApiKey
+  )
 
   const applyTheme = async () => {
     try {

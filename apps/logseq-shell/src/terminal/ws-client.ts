@@ -18,14 +18,15 @@ export class ShellClient {
 
   constructor(
     private readonly url: string,
-    private readonly emit: (event: ClientEvent) => void
+    private readonly emit: (event: ClientEvent) => void,
+    private readonly apiKey?: string
   ) {}
 
   connect() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) return
 
     this.emit({ type: 'status', status: 'connecting' })
-    const ws = new WebSocket(this.url)
+    const ws = new WebSocket(this.buildWebSocketUrl())
     ws.binaryType = 'arraybuffer'
 
     ws.onopen = () => {
@@ -88,6 +89,21 @@ export class ShellClient {
   closeSession() {
     if (!this.sessionId) return
     this.send({ type: 'close', sessionId: this.sessionId })
+  }
+
+  private buildWebSocketUrl(): string {
+    const apiKey = this.apiKey?.trim()
+    if (!apiKey) return this.url
+
+    try {
+      const base = typeof window !== 'undefined' ? window.location.href : undefined
+      const url = base ? new URL(this.url, base) : new URL(this.url)
+      url.searchParams.set('api_key', apiKey)
+      return url.toString()
+    } catch {
+      const sep = this.url.includes('?') ? '&' : '?'
+      return `${this.url}${sep}api_key=${encodeURIComponent(apiKey)}`
+    }
   }
 
   private send(payload: unknown) {

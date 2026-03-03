@@ -17,6 +17,14 @@ logseq-shelld --install-service
 This avoids macOS downloaded-binary quarantine issues and installs from source directly.
 `--install-service` now records your current user shell and key environment values (HOME/USER/PATH/LANG) for service runs.
 
+Optional API key auth:
+
+```bash
+logseq-shelld --api-key "change-me" --install-service
+```
+
+When API key is set on daemon, set the same value in plugin setting **Daemon API key (optional)**. The plugin sends it when opening the websocket connection.
+
 If `cargo` is missing:
 
 ```bash
