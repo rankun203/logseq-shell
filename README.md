@@ -1,5 +1,9 @@
 # logseq-shell
 
+Logseq-shell is a dockable terminal inside Logseq (bottom/right, resizable, keyboard toggle, restart session, default startup command, optional API key auth).
+
+<img width="1095" height="511" alt="image" src="https://github.com/user-attachments/assets/b215d0d1-b4ea-425e-b989-301a86271da2" />
+
 Logseq terminal integration:
 
 - `apps/logseq-shell`: Logseq plugin UI
