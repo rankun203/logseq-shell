@@ -9,17 +9,26 @@ description: "Interact with a local Logseq graph through the HTTP API at http://
 Use this skill to query and analyze a local Logseq graph through the Logseq HTTP API server.
 
 ## Quick Start
-1. Confirm Logseq HTTP server is running at `http://127.0.0.1:12315/`.
-2. Get the API token from Logseq settings and export it:
+1. Always run:
+```bash
+python3 scripts/logseq_http.py --help
+```
+before any other command to confirm command availability.
+2. Confirm Logseq HTTP server is running at `http://127.0.0.1:12315/`.
+3. Get the API token from Logseq settings and export it:
 ```bash
 export LOGSEQ_TOKEN="your-token"
 export LOGSEQ_BASE_URL="http://127.0.0.1:12315"   # optional
 ```
-3. Run a quick connectivity check:
+4. Run a quick connectivity check:
 ```bash
 python3 scripts/logseq_http.py call --method logseq.Editor.getCurrentPage
 ```
-4. If you get `401 Unauthorized`, refresh/re-copy token and retry.
+5. If you get `401 Unauthorized`, generate a new token in Logseq: Open Logseq → Settings → API Access (or Local HTTP API), create/copy a fresh token, then set it:
+```bash
+export LOGSEQ_TOKEN="your-new-token"
+```
+Then rerun the helper commands.
 
 ## API Contract
 Use `POST /api` with these headers:
