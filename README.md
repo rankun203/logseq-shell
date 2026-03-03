@@ -21,7 +21,7 @@ logseq-shelld --install-service
 ```
 
 This avoids macOS downloaded-binary quarantine issues and installs from source directly.
-`--install-service` records your current user shell and key environment values (HOME/USER/PATH/LANG) for service runs.
+`--install-service` records your current user shell and key environment values (HOME/USER/PATH/LANG) for service runs, so the TTY uses the exact same user environment that was active when `--install-service` was invoked.
 
 Optional API key auth:
 
