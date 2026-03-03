@@ -10,7 +10,7 @@ Logseq terminal integration:
 ### 1) Install daemon (recommended)
 
 ```bash
-cargo install --git https://github.com/rankun203/logseq-shell --tag 0.2.0 logseq-shelld
+cargo install --git https://github.com/rankun203/logseq-shell --tag 0.2.1 logseq-shelld
 logseq-shelld --install-service
 ```
 
@@ -71,7 +71,7 @@ Platform behavior:
 ### 4) Upgrade daemon
 
 ```bash
-cargo install --force --git https://github.com/rankun203/logseq-shell --tag 0.2.0 logseq-shelld
+cargo install --force --git https://github.com/rankun203/logseq-shell --tag 0.2.1 logseq-shelld
 logseq-shelld --install-service
 ```
 
@@ -95,7 +95,7 @@ GitHub Actions workflow (`.github/workflows/release-shelld.yml`) automatically:
   - `aarch64-apple-darwin`
 - builds `logseq-shell` plugin bundle
 - uploads build artifacts on `main`/`master` pushes
-- on tags like `0.2.0` (or `v0.2.0`), publishes both daemon and plugin archives to GitHub Releases
+- on tags like `0.2.1` (or `v0.2.1`), publishes both daemon and plugin archives to GitHub Releases
 
 ---
 

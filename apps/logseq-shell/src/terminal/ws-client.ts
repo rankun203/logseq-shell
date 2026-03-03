@@ -31,7 +31,7 @@ export class ShellClient {
 
     ws.onopen = () => {
       this.emit({ type: 'status', status: 'connected' })
-      this.send({ type: 'hello', client: 'logseq-shell/0.1.0' })
+      this.send({ type: 'hello', client: 'logseq-shell/0.2.1' })
     }
 
     ws.onmessage = (ev) => {
