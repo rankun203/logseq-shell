@@ -16,7 +16,7 @@ Logseq terminal integration:
 Logseq plugins can’t directly spawn terminal subprocesses inside Logseq. This daemon starts and manages the local TTY process, and the plugin connects to it to execute commands.
 
 ```bash
-cargo install --git https://github.com/rankun203/logseq-shell --tag 0.2.1 logseq-shelld
+cargo install --git https://github.com/rankun203/logseq-shell --tag 0.2.2 logseq-shelld
 logseq-shelld --install-service
 ```
 
@@ -47,7 +47,8 @@ source "$HOME/.cargo/env"
 ### 2) Install plugin files from Release
 
 ```bash
-curl -fsSL "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shell-plugin.tar.gz" | tar -xz -C "$HOME/.logseq/plugins"
+curl -fsSL -o /tmp/logseq-shell-plugin.zip "https://github.com/rankun203/logseq-shell/releases/latest/download/logseq-shell-plugin.zip"
+unzip -o /tmp/logseq-shell-plugin.zip -d "$HOME/.logseq/plugins"
 ```
 
 Then in Logseq desktop:
@@ -77,7 +78,7 @@ Platform behavior:
 ### 4) Upgrade daemon
 
 ```bash
-cargo install --force --git https://github.com/rankun203/logseq-shell --tag 0.2.1 logseq-shelld
+cargo install --force --git https://github.com/rankun203/logseq-shell --tag 0.2.2 logseq-shelld
 logseq-shelld --install-service
 ```
 

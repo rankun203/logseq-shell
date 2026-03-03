@@ -99,17 +99,18 @@ jobs:
           cp apps/logseq-shell/logseq-plugin.edn "$STAGING/logseq-plugin.edn"
           cp apps/logseq-shell/icon.svg "$STAGING/icon.svg"
           cp apps/logseq-shell/README.md "$STAGING/README.md"
+          cp LICENSE "$STAGING/LICENSE"
 
-          tar -czf logseq-shell-plugin.tar.gz "$STAGING"
-          shasum -a 256 logseq-shell-plugin.tar.gz > logseq-shell-plugin.tar.gz.sha256
+          zip -r logseq-shell-plugin.zip "$STAGING"
+          shasum -a 256 logseq-shell-plugin.zip > logseq-shell-plugin.zip.sha256
 
       - name: Upload plugin artifacts (workflow)
         uses: actions/upload-artifact@v4
         with:
           name: logseq-shell-plugin
           path: |
-            logseq-shell-plugin.tar.gz
-            logseq-shell-plugin.tar.gz.sha256
+            logseq-shell-plugin.zip
+            logseq-shell-plugin.zip.sha256
 
   release:
     name: publish GitHub release assets
@@ -133,4 +134,5 @@ jobs:
         with:
           files: |
             release-assets/**/*.tar.gz
+            release-assets/**/*.zip
             release-assets/**/*.sha256
