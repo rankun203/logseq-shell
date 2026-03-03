@@ -67,6 +67,15 @@ cargo install --force --git https://github.com/rankun203/logseq-shell --tag v1.0
 logseq-shelld --install-service
 ```
 
+### 5) Install logseq-local-http skill
+
+Use this skill when a coding assistant needs to query your local Logseq app via HTTP (search notes, pages, backlinks, journals, and graph traversal).
+
+```bash
+cp -R "$(pwd)/apps/skills/logseq-local-http" "$HOME/.codex/skills/"
+cp -R "$(pwd)/apps/skills/logseq-local-http" "$HOME/.claude/skills/"
+``` 
+
 ---
 
 ## CI/CD and release artifacts
