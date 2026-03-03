@@ -13,6 +13,8 @@ Logseq terminal integration:
 
 ### 1) Install daemon
 
+Logseq plugins can’t directly spawn terminal subprocesses inside Logseq. This daemon starts and manages the local TTY process, and the plugin connects to it to execute commands.
+
 ```bash
 cargo install --git https://github.com/rankun203/logseq-shell --tag 0.2.1 logseq-shelld
 logseq-shelld --install-service
