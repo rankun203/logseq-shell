@@ -1,0 +1,4 @@
+interface:
+  display_name: "Logseq Local API"
+  short_description: "Search and traverse a local Logseq graph"
+  default_prompt: "Use $logseq-local-http to query my local Logseq graph for search, related pages, journal notes, and link traversal."
