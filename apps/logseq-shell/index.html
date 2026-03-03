@@ -32,6 +32,13 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        opacity: 0.3;
+        transition: opacity 120ms ease;
+      }
+
+      .shell-session-controls:hover,
+      .shell-session-controls:focus-within {
+        opacity: 1;
       }
 
       .session-action-btn {
@@ -44,22 +51,18 @@
         border: 1px solid transparent;
         background: transparent;
         color: var(--ls-secondary-text-color, var(--ls-primary-text-color, #ddd));
-        opacity: 0.3;
         cursor: pointer;
-        transition: opacity 120ms ease, background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+        transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
       }
 
       .session-action-btn--light {
         background: color-mix(in srgb, white 92%, var(--ls-primary-background-color, #fff) 8%);
         border-color: color-mix(in srgb, black 18%, transparent);
         color: #20242b;
-        opacity: 0.94;
       }
 
-      .shell-root:hover .session-action-btn:not(.session-action-btn--light),
       .session-action-btn:not(.session-action-btn--light):hover,
       .session-action-btn:not(.session-action-btn--light):focus-visible {
-        opacity: 1;
         color: var(--ls-primary-text-color, #fff);
         border-color: var(--ls-border-color, #666);
         background: color-mix(in srgb, var(--ls-secondary-background-color, #222) 88%, black 12%);
