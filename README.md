@@ -11,7 +11,7 @@ Logseq terminal integration:
 
 ## User guide
 
-### 1) Install daemon (recommended)
+### 1) Install daemon
 
 ```bash
 cargo install --git https://github.com/rankun203/logseq-shell --tag 0.2.1 logseq-shelld
